@@ -8,6 +8,7 @@ import useElementBounding from './useElementBounding'
 import useFetch from './useFetch'
 import useStorage from './useLocalStorage'
 import useNetwork from './useNetwork'
+import useScreenlock from './useScreenlock'
 
 export {
   useBase64,
@@ -20,4 +21,5 @@ export {
   useFetch,
   useStorage,
   useNetwork,
+  useScreenlock,
 }

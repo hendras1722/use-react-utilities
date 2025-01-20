@@ -44,12 +44,30 @@ export default function useDraggable(
   const [isDragging, setIsDragging] = useState(false)
   const dragStartRef = useRef<Position | null>(null)
   const initialPositionRef = useRef<Position>({ x: 0, y: 0 })
+  const rafRef = useRef<number | null>(null)
+
+  // Initialize touch handling immediately when component mounts
+  useEffect(() => {
+    const target = targetRef.current
+    if (target) {
+      target.style.touchAction = 'none'
+      target.style.userSelect = 'none'
+      // This ensures better touch response on iOS
+      target.addEventListener('touchstart', (e) => e.preventDefault(), {
+        passive: false,
+      })
+    }
+  }, [])
 
   const handlePointerDown = useCallback(
     (e: PointerEvent) => {
       const target = targetRef.current
       if (!target) return
 
+      // Always capture pointer immediately
+      target.setPointerCapture(e.pointerId)
+
+      // Use clientX/Y for both mouse and touch
       dragStartRef.current = {
         x: e.clientX,
         y: e.clientY,
@@ -66,6 +84,12 @@ export default function useDraggable(
       }
 
       setIsDragging(true)
+
+      // Cancel any ongoing animation frame
+      if (rafRef.current) {
+        cancelAnimationFrame(rafRef.current)
+      }
+
       if (preventDefault) e.preventDefault()
       if (stopPropagation) e.stopPropagation()
     },
@@ -77,7 +101,6 @@ export default function useDraggable(
       let constrainedX = x
       let constrainedY = y
 
-      // Apply custom boundaries if provided
       if (boundaries) {
         if (typeof boundaries.minX === 'number') {
           constrainedX = Math.max(constrainedX, boundaries.minX)
@@ -93,7 +116,6 @@ export default function useDraggable(
         }
       }
 
-      // Apply container boundaries if provided
       if (containerElement) {
         const containerRect = containerElement.getBoundingClientRect()
         const target = targetRef.current
@@ -115,9 +137,9 @@ export default function useDraggable(
     [boundaries, containerElement, targetRef]
   )
 
-  const handlePointerMove = useCallback(
+  const updatePosition = useCallback(
     (e: PointerEvent) => {
-      if (!isDragging || !dragStartRef.current) return
+      if (!dragStartRef.current) return
 
       const deltaX = e.clientX - dragStartRef.current.x
       const deltaY = e.clientY - dragStartRef.current.y
@@ -126,39 +148,68 @@ export default function useDraggable(
       const newY = initialPositionRef.current.y + deltaY
 
       const constrainedPosition = constrainPosition(newX, newY)
-      setPosition(constrainedPosition)
 
-      if (onMove) onMove(constrainedPosition, e)
+      // Use RAF for smoother updates
+      rafRef.current = requestAnimationFrame(() => {
+        setPosition(constrainedPosition)
+        if (onMove) onMove(constrainedPosition, e)
+      })
+    },
+    [constrainPosition, onMove]
+  )
+
+  const handlePointerMove = useCallback(
+    (e: PointerEvent) => {
+      if (!isDragging) return
+
+      updatePosition(e)
 
       if (preventDefault) e.preventDefault()
       if (stopPropagation) e.stopPropagation()
     },
-    [isDragging, constrainPosition, onMove, preventDefault, stopPropagation]
+    [isDragging, preventDefault, stopPropagation, updatePosition]
   )
 
   const handlePointerUp = useCallback(
     (e: PointerEvent) => {
       if (!isDragging) return
 
+      const target = targetRef.current
+      if (target) {
+        target.releasePointerCapture(e.pointerId)
+      }
+
+      if (rafRef.current) {
+        cancelAnimationFrame(rafRef.current)
+      }
+
       setIsDragging(false)
       dragStartRef.current = null
+
       if (onEnd) onEnd(position, e)
 
       if (preventDefault) e.preventDefault()
       if (stopPropagation) e.stopPropagation()
     },
-    [isDragging, position, onEnd, preventDefault, stopPropagation]
+    [isDragging, position, onEnd, preventDefault, stopPropagation, targetRef]
   )
 
   useEffect(() => {
     const target = targetRef.current
     if (!target) return
 
-    target.addEventListener('pointerdown', handlePointerDown)
-    window.addEventListener('pointermove', handlePointerMove)
+    target.addEventListener('pointerdown', handlePointerDown, {
+      passive: false,
+    })
+    window.addEventListener('pointermove', handlePointerMove, {
+      passive: false,
+    })
     window.addEventListener('pointerup', handlePointerUp)
 
     return () => {
+      if (rafRef.current) {
+        cancelAnimationFrame(rafRef.current)
+      }
       target.removeEventListener('pointerdown', handlePointerDown)
       window.removeEventListener('pointermove', handlePointerMove)
       window.removeEventListener('pointerup', handlePointerUp)
