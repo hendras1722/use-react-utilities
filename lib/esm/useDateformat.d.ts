@@ -22,6 +22,6 @@ export interface UseDateFormatOptions {
  * ```
  */
 declare const useDateFormat: (date: DateLike, formatString?: string, options?: UseDateFormatOptions) => string;
-export declare const useRelativeDate: (date: DateLike, options?: UseDateFormatOptions) => string;
-export declare const useRelativeDateBetween: (date: DateLike, baseDate: DateLike, options?: UseDateFormatOptions) => string;
-export default useDateFormat;
+declare const useRelativeDate: (date: DateLike, options?: UseDateFormatOptions) => string;
+declare const useRelativeDateBetween: (date: DateLike, baseDate: DateLike, options?: UseDateFormatOptions) => string;
+export { useDateFormat, useRelativeDate, useRelativeDateBetween };

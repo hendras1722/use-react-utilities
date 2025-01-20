@@ -92,7 +92,7 @@ const useDateFormat = (
 }
 
 // Additional utility hooks built on top of date-fns
-export const useRelativeDate = (
+const useRelativeDate = (
   date: DateLike,
   options: UseDateFormatOptions = {}
 ) => {
@@ -115,7 +115,7 @@ export const useRelativeDate = (
   }, [date, options.locale])
 }
 
-export const useRelativeDateBetween = (
+const useRelativeDateBetween = (
   date: DateLike,
   baseDate: DateLike,
   options: UseDateFormatOptions = {}
@@ -143,4 +143,4 @@ export const useRelativeDateBetween = (
   }, [date, baseDate, options.locale])
 }
 
-export default useDateFormat
+export { useDateFormat, useRelativeDate, useRelativeDateBetween }

@@ -1,6 +1,12 @@
 import useBase64 from './useBase64'
 import useBreakpoints from './useBreakpoints'
-import useDateformat from './useDateformat'
+import {
+  DateLike,
+  UseDateFormatOptions,
+  useDateFormat,
+  useRelativeDate,
+  useRelativeDateBetween,
+} from './useDateformat'
 import useDebounce from './useDebounce'
 import useDraggable from './useDraggable'
 import useDropZone from './useDropzone'
@@ -13,7 +19,11 @@ import useScreenlock from './useScreenlock'
 export {
   useBase64,
   useBreakpoints,
-  useDateformat,
+  DateLike,
+  UseDateFormatOptions,
+  useDateFormat,
+  useRelativeDate,
+  useRelativeDateBetween,
   useDebounce,
   useDraggable,
   useDropZone,

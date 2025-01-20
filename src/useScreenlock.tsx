@@ -66,7 +66,7 @@ export default function useScrollLock(
     return elementRef as HTMLElement
   }, [elementRef])
 
-  const lock = useCallback(() => {
+  useCallback(() => {
     const el = getElement()
     if (!el || isLocked) return
 
