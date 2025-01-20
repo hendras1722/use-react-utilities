@@ -1,0 +1,30 @@
+{
+  "name": "@msa-cli/react-composable",
+  "version": "1.0.0",
+  "description": "A set of reusable React composable utilities designed to simplify state management, logic abstraction, and enhance reactivity in modern React applications. Perfect for creating modular and maintainable codebases.",
+  "main": "./lib/cjs/index.js",
+  "module": "./lib/esm/index.js",
+  "types": "./lib/esm/index.d.ts",
+  "files": [
+    "/lib"
+  ],
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "npm run build:esm && npm run build:cjs",
+    "build:esm": "tsc",
+    "build:cjs": "tsc --module commonjs --outDir lib/cjs"
+  },
+  "author": "Muh Syahendra A",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/hendras1722/-msa-cli-react-composable"
+  },
+  "license": "ISC",
+  "dependencies": {
+    "@types/react": "^19.0.7",
+    "@types/react-dom": "^19.0.3",
+    "date-fns": "^4.1.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  }
+}
