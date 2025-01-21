@@ -15,6 +15,10 @@ import useFetch from './useFetch'
 import useStorage from './useLocalStorage'
 import useNetwork from './useNetwork'
 import useScreenlock from './useScreenlock'
+import useClipboard from './useClipboard'
+import { useCookies, parseCookies, removeCookie, setCookie } from './useCookies'
+import useInfiniteScroll from './useInfiniteScroll'
+import useStateHistory from './useStateHistory'
 
 export {
   useBase64,
@@ -32,4 +36,11 @@ export {
   useStorage,
   useNetwork,
   useScreenlock,
+  useClipboard,
+  useCookies,
+  useInfiniteScroll,
+  useStateHistory,
+  parseCookies,
+  removeCookie,
+  setCookie,
 }

@@ -1,4 +1,3 @@
-/// <reference types="react" />
 interface UseDropZoneOptions {
     /**
      * Allowed data types, if not set, all data types are allowed.
