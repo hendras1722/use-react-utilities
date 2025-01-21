@@ -16,7 +16,7 @@ import useStorage from './useLocalStorage'
 import useNetwork from './useNetwork'
 import useScreenlock from './useScreenlock'
 import useClipboard from './useClipboard'
-import { useCookies, parseCookies, removeCookie, setCookie } from './useCookies'
+import useCookies from './useCookies'
 import useInfiniteScroll from './useInfiniteScroll'
 import useStateHistory from './useStateHistory'
 
@@ -40,7 +40,4 @@ export {
   useCookies,
   useInfiniteScroll,
   useStateHistory,
-  parseCookies,
-  removeCookie,
-  setCookie,
 }

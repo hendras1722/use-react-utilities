@@ -101,11 +101,11 @@ export function removeCookie(
 /**
  * React hook to manage cookies on the client side
  */
-export function useCookies(
+export default function useCookies(
   dependencies?: string[] | null,
   { doNotParse = false }: UseCookiesOptions = {}
 ) {
-  const [, setUpdateTrigger] = useState(0)
+  const [_, setUpdateTrigger] = useState(0)
 
   const parseCookies = useCallback(() => {
     const cookies: Record<string, string> = {}
@@ -139,7 +139,7 @@ export function useCookies(
   )
 
   const get = useCallback(
-    <T = any,>(name: string): T | undefined => {
+    (name: string) => {
       const cookies = parseCookies()
       const value = cookies[name]
       return value ? parseValue(value) : undefined

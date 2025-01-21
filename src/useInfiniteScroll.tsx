@@ -5,29 +5,9 @@ type InfiniteScrollElement = HTMLElement | SVGElement | null | undefined
 interface UseInfiniteScrollOptions<
   T extends InfiniteScrollElement = InfiniteScrollElement
 > {
-  /**
-   * The minimum distance between the bottom of the element and the bottom of the viewport
-   *
-   * @default 0
-   */
   distance?: number
-  /**
-   * The direction in which to listen the scroll.
-   *
-   * @default 'bottom'
-   */
   direction?: 'top' | 'bottom' | 'left' | 'right'
-  /**
-   * The interval time between two load more (to avoid too many invokes).
-   *
-   * @default 100
-   */
   interval?: number
-  /**
-   * A function that determines whether more content can be loaded for a specific element.
-   * Should return `true` if loading more content is allowed for the given element,
-   * and `false` otherwise.
-   */
   canLoadMore?: (el: T) => boolean
 }
 
@@ -56,7 +36,8 @@ export default function useInfiniteScroll<T extends InfiniteScrollElement>(
   } = options
 
   const [isLoading, setIsLoading] = useState(false)
-  const [scrollState, setScrollState] = useState<ScrollState>({
+  const [isScrolling, setIsScrolling] = useState(false)
+  const scrollStateRef = useRef<ScrollState>({
     x: 0,
     y: 0,
     isScrolling: false,
@@ -74,7 +55,7 @@ export default function useInfiniteScroll<T extends InfiniteScrollElement>(
 
   const measureScrollState = useCallback(() => {
     const element = elementRef.current
-    if (!element) return
+    if (!element) return null
 
     const {
       scrollTop,
@@ -92,63 +73,80 @@ export default function useInfiniteScroll<T extends InfiniteScrollElement>(
       right: scrollLeft + clientWidth >= scrollWidth - distance,
     }
 
-    setScrollState((prev) => ({
-      ...prev,
+    scrollStateRef.current = {
+      ...scrollStateRef.current,
       x: scrollLeft,
       y: scrollTop,
+      isScrolling,
       arrivedState,
-    }))
+    }
 
     return arrivedState
-  }, [distance, elementRef])
+  }, [distance, elementRef, isScrolling])
 
-  const checkAndLoad = useCallback(async () => {
-    const element = elementRef.current
-    if (!element || !canLoadMore(element as T) || isLoading) return
+  const checkAndLoad = useCallback(
+    async (force = false) => {
+      const element = elementRef.current
+      if (!element || (!force && !canLoadMore(element as T)) || isLoading)
+        return
 
-    const { scrollHeight, clientHeight, scrollWidth, clientWidth } = element
-    const isNarrower =
-      direction === 'bottom' || direction === 'top'
-        ? scrollHeight <= clientHeight
-        : scrollWidth <= clientWidth
+      const { scrollHeight, clientHeight, scrollWidth, clientWidth } = element
+      const isNarrower =
+        direction === 'bottom' || direction === 'top'
+          ? scrollHeight <= clientHeight
+          : scrollWidth <= clientWidth
 
-    const currentArrivedState = measureScrollState()
+      const currentArrivedState = measureScrollState()
 
-    if (currentArrivedState?.[direction] || isNarrower) {
-      if (!loadingPromiseRef.current && !isLoading) {
-        setIsLoading(true)
-        try {
-          await Promise.all([
-            onLoadMore(scrollState),
-            new Promise<void>((resolve) => setTimeout(resolve, interval)),
-          ])
-        } finally {
-          setIsLoading(false)
-          loadingPromiseRef.current = null
-          // Check again after loading completes
-          if (elementRef.current) {
-            const newState = measureScrollState()
-            if (newState?.[direction]) {
-              setTimeout(() => checkAndLoad(), 0)
+      if (currentArrivedState?.[direction] || isNarrower) {
+        if (!loadingPromiseRef.current && !isLoading) {
+          setIsLoading(true)
+
+          try {
+            const loadMorePromise = onLoadMore(scrollStateRef.current)
+            const delayPromise = new Promise<void>((resolve) =>
+              setTimeout(resolve, interval)
+            )
+
+            loadingPromiseRef.current = Promise.all([
+              loadMorePromise,
+              delayPromise,
+            ]) as Promise<void[]>
+
+            await loadingPromiseRef.current
+          } finally {
+            setIsLoading(false)
+            loadingPromiseRef.current = null
+
+            // Use RAF to avoid immediate re-check
+            if (elementRef.current) {
+              requestAnimationFrame(() => {
+                const newState = measureScrollState()
+                if (newState?.[direction]) {
+                  checkAndLoad(true)
+                }
+              })
             }
           }
         }
       }
-    }
-  }, [
-    direction,
-    elementRef,
-    interval,
-    onLoadMore,
-    scrollState,
-    canLoadMore,
-    isLoading,
-    measureScrollState,
-  ])
+    },
+    [
+      direction,
+      elementRef,
+      interval,
+      onLoadMore,
+      canLoadMore,
+      isLoading,
+      measureScrollState,
+    ]
+  )
 
   useEffect(() => {
     const element = elementRef.current
     if (!element) return
+
+    let scrollRAF: number
 
     const handleScroll = () => {
       if (timeoutRef.current) {
@@ -157,29 +155,38 @@ export default function useInfiniteScroll<T extends InfiniteScrollElement>(
 
       if (!isScrollingRef.current) {
         isScrollingRef.current = true
-        setScrollState((prev) => ({ ...prev, isScrolling: true }))
+        setIsScrolling(true)
       }
 
-      measureScrollState()
-      checkAndLoad()
+      // Use RAF for scroll measurements
+      cancelAnimationFrame(scrollRAF)
+      scrollRAF = requestAnimationFrame(() => {
+        measureScrollState()
+        checkAndLoad()
+      })
 
       timeoutRef.current = setTimeout(() => {
         isScrollingRef.current = false
-        setScrollState((prev) => ({ ...prev, isScrolling: false }))
+        setIsScrolling(false)
       }, 100)
     }
 
     const observer = new ResizeObserver(() => {
-      measureScrollState()
-      checkAndLoad()
+      cancelAnimationFrame(scrollRAF)
+      scrollRAF = requestAnimationFrame(() => {
+        measureScrollState()
+        checkAndLoad()
+      })
     })
 
     element.addEventListener('scroll', handleScroll, { passive: true })
     observer.observe(element)
 
-    // Initial check
-    measureScrollState()
-    checkAndLoad()
+    // Initial check with RAF
+    requestAnimationFrame(() => {
+      measureScrollState()
+      checkAndLoad()
+    })
 
     return () => {
       element.removeEventListener('scroll', handleScroll)
@@ -187,19 +194,22 @@ export default function useInfiniteScroll<T extends InfiniteScrollElement>(
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current)
       }
+      cancelAnimationFrame(scrollRAF)
     }
   }, [elementRef, measureScrollState, checkAndLoad])
 
   const reset = useCallback(() => {
     loadingPromiseRef.current = null
     setIsLoading(false)
-    measureScrollState()
-    checkAndLoad()
+    requestAnimationFrame(() => {
+      measureScrollState()
+      checkAndLoad(true)
+    })
   }, [measureScrollState, checkAndLoad])
 
   return {
     isLoading,
     reset,
-    scrollState,
+    scrollState: scrollStateRef.current,
   }
 }

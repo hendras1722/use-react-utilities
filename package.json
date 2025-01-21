@@ -1,6 +1,6 @@
 {
   "name": "@msa_cli/react-composable",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "A set of reusable React composable utilities designed to simplify state management, logic abstraction, and enhance reactivity in modern React applications. Perfect for creating modular and maintainable codebases.",
   "main": "./lib/cjs/index.js",
   "module": "./lib/esm/index.js",
