@@ -10,84 +10,6 @@ type HttpMethod =
   | 'OPTIONS'
 type ResponseType = 'json' | 'text' | 'blob' | 'arrayBuffer' | 'formData'
 
-export interface UseFetchOptions<T = any> {
-  /**
-   * Response data type
-   * @default 'json'
-   */
-  responseType?: ResponseType
-
-  /**
-   * HTTP method
-   * @default 'GET'
-   */
-  method?: HttpMethod
-
-  /**
-   * Request payload for POST, PUT, PATCH methods
-   */
-  payload?: unknown
-
-  /**
-   * Content-Type header for the payload
-   * @default 'application/json' for object/array payloads
-   */
-  payloadType?: string
-
-  /**
-   * Will automatically run fetch when component mounts
-   * @default true
-   */
-  immediate?: boolean
-
-  /**
-   * Initial data before the request finished
-   * @default null
-   */
-  initialData?: T | null
-
-  /**
-   * Timeout for abort request after number of milliseconds
-   * `0` means use browser default
-   * @default 0
-   */
-  timeout?: number
-
-  /**
-   * Allow updating the data when fetch errors
-   * @default false
-   */
-  updateDataOnError?: boolean
-
-  /**
-   * Will run immediately before the fetch request is dispatched
-   */
-  beforeFetch?: (
-    ctx: BeforeFetchContext
-  ) =>
-    | Promise<Partial<BeforeFetchContext> | void>
-    | Partial<BeforeFetchContext>
-    | void
-
-  /**
-   * Will run immediately after the fetch request is returned.
-   * Runs after any 2xx response
-   */
-  afterFetch?: (
-    ctx: AfterFetchContext<T>
-  ) => Promise<Partial<AfterFetchContext<T>>> | Partial<AfterFetchContext<T>>
-
-  /**
-   * Will run immediately after the fetch request is returned.
-   * Runs after any 4xx and 5xx response
-   */
-  onFetchError?: (
-    ctx: OnFetchErrorContext<T>
-  ) =>
-    | Promise<Partial<OnFetchErrorContext<T>>>
-    | Partial<OnFetchErrorContext<T>>
-}
-
 interface BeforeFetchContext {
   url: string
   options: RequestInit
@@ -105,62 +27,30 @@ interface OnFetchErrorContext<T = any> {
   response: Response | null
 }
 
-interface UseFetchReturn<T> {
-  /**
-   * Indicates if the fetch request has finished
-   */
-  isFinished: boolean
-
-  /**
-   * Indicates if the request is currently being fetched
-   */
-  isFetching: boolean
-
-  /**
-   * The statusCode of the HTTP fetch response
-   */
-  statusCode: number | null
-
-  /**
-   * The raw response of the fetch response
-   */
-  response: Response | null
-
-  /**
-   * Any fetch errors that may have occurred
-   */
-  error: any
-
-  /**
-   * The fetch response body on success
-   */
-  data: T | null
-
-  /**
-   * Indicates if the fetch request is able to be aborted
-   */
-  canAbort: boolean
-
-  /**
-   * Indicates if the fetch request was aborted
-   */
-  aborted: boolean
-
-  /**
-   * Abort the fetch request
-   */
-  abort: () => void
-
-  /**
-   * Manually call the fetch
-   * @param throwOnFailed Whether to throw an error on failed requests
-   */
-  execute: (throwOnFailed?: boolean) => Promise<Response | null>
-
-  /**
-   * Refetch the data using current options
-   */
-  refetch: () => Promise<Response | null>
+interface UseFetchOptions<T = any> {
+  responseType?: ResponseType
+  method?: HttpMethod
+  immediate?: boolean
+  timeout?: number
+  updateDataOnError?: boolean
+  initialData?: T | null
+  payload?: unknown
+  params?: Record<string, any>
+  payloadType?: string
+  beforeFetch?: (
+    ctx: BeforeFetchContext
+  ) =>
+    | Promise<Partial<BeforeFetchContext> | void>
+    | Partial<BeforeFetchContext>
+    | void
+  afterFetch?: (
+    ctx: AfterFetchContext<T>
+  ) => Promise<Partial<AfterFetchContext<T>>> | Partial<AfterFetchContext<T>>
+  onFetchError?: (
+    ctx: OnFetchErrorContext<T>
+  ) =>
+    | Promise<Partial<OnFetchErrorContext<T>>>
+    | Partial<OnFetchErrorContext<T>>
 }
 
 const payloadMapping: Record<string, string> = {
@@ -172,11 +62,23 @@ export default function useFetch<T = any>(
   url: string,
   fetchOptions: RequestInit = {},
   options: UseFetchOptions<T> = {}
-): UseFetchReturn<T> {
+): {
+  isFinished: boolean
+  isFetching: boolean
+  statusCode: number | null
+  response: Response | null
+  error: any
+  data: T | null
+  canAbort: boolean
+  aborted: boolean
+  abort: () => void
+  execute: (throwOnFailed?: boolean) => Promise<Response | null>
+  refetch: () => Promise<Response | null>
+} {
   const {
     responseType = 'json',
     method = 'GET',
-    immediate = true,
+    immediate = false,
     timeout = 0,
     updateDataOnError = false,
     initialData = null,
@@ -191,72 +93,85 @@ export default function useFetch<T = any>(
   const [error, setError] = useState<any>(null)
   const [data, setData] = useState<T | null>(initialData)
   const [aborted, setAborted] = useState(false)
-  const hasFetched = useRef(false)
 
   const abortController = useRef<AbortController | null>(null)
   const timeoutId = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const executeCounter = useRef(0)
+  const mountedRef = useRef(false)
+  const initialFetchRef = useRef(false)
 
   const canAbort = typeof AbortController === 'function' && isFetching
 
-  const abort = useCallback(() => {
-    if (typeof AbortController === 'function') {
-      abortController.current?.abort()
-      abortController.current = new AbortController()
-      setAborted(true)
+  const cleanup = useCallback(() => {
+    if (timeoutId.current) {
+      clearTimeout(timeoutId.current)
+      timeoutId.current = null
+    }
+    if (abortController.current) {
+      abortController.current.abort()
+      abortController.current = null
     }
   }, [])
 
+  const abort = useCallback(() => {
+    if (typeof AbortController === 'function') {
+      cleanup()
+      abortController.current = new AbortController()
+      setAborted(true)
+    }
+  }, [cleanup])
+
+  const createFetchOptions = useCallback(() => {
+    const defaultOptions: RequestInit = {
+      method,
+      headers: { ...fetchOptions.headers },
+    }
+
+    if (payload) {
+      const headers = { ...defaultOptions.headers } as Record<string, string>
+      let finalPayloadType = payloadType
+
+      if (
+        !finalPayloadType &&
+        (Object.getPrototypeOf(payload) === Object.prototype ||
+          Array.isArray(payload)) &&
+        !(payload instanceof FormData)
+      ) {
+        finalPayloadType = 'json'
+      }
+
+      if (finalPayloadType) {
+        headers['Content-Type'] =
+          payloadMapping[finalPayloadType] ?? finalPayloadType
+        defaultOptions.headers = headers
+      }
+
+      defaultOptions.body =
+        finalPayloadType === 'json'
+          ? JSON.stringify(payload)
+          : (payload as BodyInit)
+    }
+
+    return defaultOptions
+  }, [method, fetchOptions.headers, payload, payloadType])
+
   const execute = useCallback(
     async (throwOnFailed = false) => {
-      abort()
+      if (isFetching || !mountedRef.current) return null
 
+      // Only set fetching state if we're really going to execute
       setIsFetching(true)
       setIsFinished(false)
       setError(null)
       setStatusCode(null)
       setAborted(false)
 
-      executeCounter.current += 1
-      const currentExecuteCounter = executeCounter.current
-
-      const defaultFetchOptions: RequestInit = {
-        method,
-        headers: {},
-      }
-
-      if (payload) {
-        const headers = { ...defaultFetchOptions.headers } as Record<
-          string,
-          string
-        >
-
-        let finalPayloadType = payloadType
-        if (
-          !finalPayloadType &&
-          (Object.getPrototypeOf(payload) === Object.prototype ||
-            Array.isArray(payload)) &&
-          !(payload instanceof FormData)
-        ) {
-          finalPayloadType = 'json'
-        }
-
-        if (finalPayloadType) {
-          headers['Content-Type'] =
-            payloadMapping[finalPayloadType] ?? finalPayloadType
-        }
-
-        defaultFetchOptions.body =
-          finalPayloadType === 'json'
-            ? JSON.stringify(payload)
-            : (payload as BodyInit)
-      }
-
+      const defaultOptions = createFetchOptions()
       let isCanceled = false
+
       const context: BeforeFetchContext = {
         url,
         options: {
-          ...defaultFetchOptions,
+          ...defaultOptions,
           ...fetchOptions,
           signal: abortController.current?.signal,
         },
@@ -265,66 +180,75 @@ export default function useFetch<T = any>(
         },
       }
 
-      if (options.beforeFetch) {
-        Object.assign(context, await options.beforeFetch(context))
-      }
-
-      if (isCanceled) {
-        setIsFetching(false)
-        return null
-      }
-
-      if (timeout) {
-        timeoutId.current = setTimeout(abort, timeout)
-      }
-
-      let responseData: any = null
-
       try {
-        const fetchResponse = await fetch(context.url, {
+        if (options.beforeFetch) {
+          Object.assign(context, await options.beforeFetch(context))
+        }
+
+        if (isCanceled || !mountedRef.current) {
+          setIsFetching(false)
+          return null
+        }
+
+        if (timeout) {
+          timeoutId.current = setTimeout(abort, timeout)
+        }
+        const params = options.params
+          ? '?' + new URLSearchParams(options.params)
+          : ''
+        const fetchResponse = await fetch(context.url + params, {
           ...context.options,
           headers: {
-            ...defaultFetchOptions.headers,
+            ...defaultOptions.headers,
             ...context.options?.headers,
           },
         })
 
+        if (!mountedRef.current) return null
+
         setResponse(fetchResponse)
         setStatusCode(fetchResponse.status)
 
-        responseData = await fetchResponse.clone()[responseType]()
+        const responseData = await fetchResponse.clone()[responseType]()
 
         if (!fetchResponse.ok) {
           setData(initialData)
           throw new Error(fetchResponse.statusText)
         }
 
-        if (options.afterFetch) {
+        if (options.afterFetch && mountedRef.current) {
           const result = await options.afterFetch({
             data: responseData,
             response: fetchResponse,
           })
-          responseData = result.data ?? responseData
+          const finalData = result.data ?? responseData
+          setData(finalData)
+        } else if (mountedRef.current) {
+          setData(responseData)
         }
 
-        setData(responseData)
         return fetchResponse
       } catch (fetchError: any) {
+        if (!mountedRef.current) return null
+
         let errorData = fetchError.message || fetchError.name
+        let responseData = null as T | null
 
         if (options.onFetchError) {
           const result = await options.onFetchError({
-            data: responseData,
+            data: null,
             error: fetchError,
-            response: response,
+            response,
           })
           errorData = result.error ?? errorData
-          responseData = result.data ?? responseData
+          responseData = result.data ?? null
         }
 
-        setError(errorData)
-        if (updateDataOnError) {
-          setData(responseData)
+        if (mountedRef.current) {
+          setError(errorData)
+          if (updateDataOnError && responseData) {
+            setData(responseData)
+          }
         }
 
         if (throwOnFailed) {
@@ -332,7 +256,7 @@ export default function useFetch<T = any>(
         }
         return null
       } finally {
-        if (currentExecuteCounter === executeCounter.current) {
+        if (mountedRef.current) {
           setIsFetching(false)
           setIsFinished(true)
         }
@@ -346,30 +270,32 @@ export default function useFetch<T = any>(
       fetchOptions,
       options,
       abort,
-      method,
-      payload,
-      payloadType,
+      createFetchOptions,
       responseType,
       initialData,
       timeout,
       updateDataOnError,
+      isFetching,
     ]
   )
 
   const refetch = useCallback(() => execute(), [execute])
 
   useEffect(() => {
-    if (immediate) {
+    mountedRef.current = true
+
+    if (immediate && !initialFetchRef.current) {
+      initialFetchRef.current = true
       execute()
+    }
+
+    return () => {
+      mountedRef.current = false
+      if (timeoutId.current) {
+        clearTimeout(timeoutId.current)
+      }
     }
   }, [immediate, execute])
-
-  useEffect(() => {
-    if (!immediate && !hasFetched.current) {
-      hasFetched.current = true
-      execute()
-    }
-  }, [])
 
   return {
     isFinished,
