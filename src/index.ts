@@ -19,8 +19,12 @@ import useClipboard from './useClipboard'
 import useCookies from './useCookies'
 import useInfiniteScroll from './useInfiniteScroll'
 import useStateHistory from './useStateHistory'
+import useTimestamp from './useTimestamp'
+import useIdle from './useIdle'
 
 export {
+  useTimestamp,
+  useIdle,
   useBase64,
   useBreakpoints,
   DateLike,
