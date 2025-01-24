@@ -1,85 +1,94 @@
-import { useState, useEffect, useCallback, useRef } from 'react'
-import useSupported from './useSupported'
-import usePermission from './usePermission'
+import { useRef, useState } from 'react'
 
-interface UseUserMediaOptions {
-  enabled?: boolean
-  autoSwitch?: boolean
-  constraints?: MediaStreamConstraints
-  navigator?: Navigator
-}
-
-declare global {
-  interface Window {
-    stream: MediaStream | null
+export default function useCamera(
+  customConstraints: MediaStreamConstraints = {
+    audio: false,
+    video: {
+      width: { ideal: 640 },
+      height: { ideal: 480 },
+      facingMode: 'user',
+      frameRate: { ideal: 30 },
+    },
   }
-}
-
-export default function useUserMedia(options: UseUserMediaOptions = {}) {
-  const {
-    enabled: initialEnabled = false,
-    autoSwitch = true,
-    constraints: initialConstraints = { video: true, audio: false },
-    navigator = window.navigator,
-  } = options
-
+) {
+  const [loadingVideos, setLoadingVideos] = useState(true)
   const [stream, setStream] = useState<MediaStream | null>(null)
-  const [enabled, setEnabled] = useState(initialEnabled)
-  const [constraints, setConstraints] =
-    useState<MediaStreamConstraints>(initialConstraints)
-  const [error, setError] = useState<Error | null>(null)
+  // const [facingMode, setFacingMode] = useState<'user' | 'environment'>('user')
+  const facingMode = useRef<'user' | 'environment'>('user')
+  const [picture, setPicture] = useState<string | null>(null)
 
-  const isSupported = useSupported(() => checkSupport())
-  const cameraPermission = usePermission('camera')
+  const start = async () => {
+    try {
+      setLoadingVideos(true)
 
-  const streamRef = useRef<MediaStream | null>(null)
+      // Enumerate devices and filter video inputs
+      const devices = await navigator.mediaDevices.enumerateDevices()
+      const videoDevices = devices.filter(
+        (device) => device.kind === 'videoinput'
+      )
 
-  const checkSupport = () => {
-    return cameraPermission
+      if (videoDevices.length === 0) {
+        throw new Error('No video input devices found.')
+      }
+      // Select device based on facing mode
+      const deviceId =
+        facingMode.current === 'environment'
+          ? videoDevices[videoDevices.length - 1]?.deviceId
+          : videoDevices[0]?.deviceId
+      // Update constraints with selected device
+      const constraints: MediaStreamConstraints = {
+        audio: false,
+        video: {
+          ...(customConstraints.video as MediaTrackConstraints),
+          facingMode: facingMode.current,
+          deviceId: { exact: deviceId },
+        },
+      }
+
+      const mediaStream = await navigator.mediaDevices.getUserMedia(constraints)
+
+      // Attach the stream to the video element
+      const videoElement = document.getElementById('video') as HTMLVideoElement
+      if (videoElement) {
+        videoElement.srcObject = mediaStream
+        videoElement.onloadedmetadata = () => {
+          videoElement.play()
+        }
+      }
+
+      setStream(mediaStream)
+    } catch (error) {
+      console.error('Error starting camera:', error)
+      alert(
+        "Camera could not be started. Please check your browser's permissions or try a different device."
+      )
+    } finally {
+      setLoadingVideos(false)
+    }
   }
 
-  const start = useCallback(async () => {
-    if (!isSupported) {
-      setError(new Error('Media devices not supported'))
-      return null
-    }
-
-    try {
-      const newStream = await navigator.mediaDevices.getUserMedia(constraints)
-      window.stream = newStream
-      setStream(newStream)
-      streamRef.current = newStream
-      setEnabled(true)
-      setError(null)
-      return newStream
-    } catch (err) {
-      const errorMessage =
-        err instanceof Error ? err.message : 'Failed to access media devices'
-      setError(new Error(errorMessage))
+  const stop = () => {
+    if (stream) {
+      stream.getTracks().forEach((track) => track.stop())
       setStream(null)
-      setEnabled(false)
-      return null
     }
-  }, [isSupported, constraints])
 
-  const stop = useCallback(() => {
-    const videos = document.querySelector('video') as HTMLVideoElement
-    if (!videos) return
-    const tracks = (videos?.srcObject as any)?.getTracks()
+    const videoElement = document.getElementById('video') as HTMLVideoElement
+    if (videoElement) {
+      videoElement.srcObject = null
+    }
+  }
 
-    if (!tracks) return
-    tracks.forEach((track: any) => {
-      track.stop()
-    })
-    videos.srcObject = null
-  }, [])
-
-  const restart = useCallback(async () => {
+  const switchCamera = async (mode: 'user' | 'environment') => {
     stop()
-    return await start()
-  }, [stop, start])
+    facingMode.current = mode
+    start()
+  }
+  const refreshCamera = async () => {
+    stop()
+    start()
+  }
 
-  const [picture, setPicture] = useState<string | null>(null)
   function takeSnapshot() {
     const video = document.getElementsByTagName('video')[0]
     const width = video.offsetWidth
@@ -112,48 +121,14 @@ export default function useUserMedia(options: UseUserMediaOptions = {}) {
     // setPicture(canvas.toDataURL('image/png'))
   }
 
-  useEffect(() => {
-    if (picture) {
-      return URL.revokeObjectURL(picture)
-    }
-  }, [picture])
-
-  useEffect(() => {
-    if (enabled && isSupported) {
-      start()
-    } else {
-      stop()
-    }
-  }, [enabled, isSupported])
-
-  // useEffect(() => {
-  //   if (autoSwitch && stream) {
-  //     restart()
-  //   }
-  // }, [constraints, autoSwitch, restart])
-
-  // Cleanup on unmount
-  useEffect(() => {
-    return () => {
-      stop()
-    }
-  }, [stop])
-
   return {
-    isSupported,
     stream,
+    loadingVideos,
     start,
     stop,
-    restart,
-    constraints,
-    enabled,
-    autoSwitch,
-    setConstraints,
-    setEnabled,
-    error,
+    switchCamera,
     picture,
     takeSnapshot,
+    refreshCamera,
   }
 }
-
-export type UseUserMediaReturn = ReturnType<typeof useUserMedia>

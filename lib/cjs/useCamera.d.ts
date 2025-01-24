@@ -1,28 +1,10 @@
-interface UseUserMediaOptions {
-    enabled?: boolean;
-    autoSwitch?: boolean;
-    constraints?: MediaStreamConstraints;
-    navigator?: Navigator;
-}
-declare global {
-    interface Window {
-        stream: MediaStream | null;
-    }
-}
-export default function useUserMedia(options?: UseUserMediaOptions): {
-    isSupported: boolean;
+export default function useCamera(customConstraints?: MediaStreamConstraints): {
     stream: MediaStream | null;
-    start: () => Promise<MediaStream | null>;
+    loadingVideos: boolean;
+    start: () => Promise<void>;
     stop: () => void;
-    restart: () => Promise<MediaStream | null>;
-    constraints: MediaStreamConstraints;
-    enabled: boolean;
-    autoSwitch: boolean;
-    setConstraints: import("react").Dispatch<import("react").SetStateAction<MediaStreamConstraints>>;
-    setEnabled: import("react").Dispatch<import("react").SetStateAction<boolean>>;
-    error: Error | null;
+    switchCamera: (mode: "user" | "environment") => Promise<void>;
     picture: string | null;
     takeSnapshot: () => void;
+    refreshCamera: () => Promise<void>;
 };
-export type UseUserMediaReturn = ReturnType<typeof useUserMedia>;
-export {};
