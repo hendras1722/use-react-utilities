@@ -21,8 +21,16 @@ import useInfiniteScroll from './useInfiniteScroll'
 import useStateHistory from './useStateHistory'
 import useTimestamp from './useTimestamp'
 import useIdle from './useIdle'
+import useCamera from './useCamera'
+import useDevicesList from './useDevicelist'
+import usePermission from './usePermission'
+import useSupported from './useSupported'
 
 export {
+  useCamera,
+  useDevicesList,
+  usePermission,
+  useSupported,
   useTimestamp,
   useIdle,
   useBase64,
