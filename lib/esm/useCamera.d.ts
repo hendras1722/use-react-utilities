@@ -1,10 +1,16 @@
-export default function useCamera(customConstraints?: MediaStreamConstraints): {
-    stream: MediaStream | null;
-    loadingVideos: boolean;
-    start: () => Promise<void>;
-    stop: () => void;
-    switchCamera: (mode: "user" | "environment") => Promise<void>;
-    picture: string | null;
+declare const CameraPage: () => {
+    startCamera: () => Promise<void>;
+    stopCamera: () => void;
     takeSnapshot: () => void;
-    refreshCamera: () => Promise<void>;
+    setIsFrontCamera: import("react").Dispatch<import("react").SetStateAction<boolean>>;
+    isFrontCamera: boolean;
+    stream: MediaStream | null;
+    devices: MediaDeviceInfo[];
+    deviceId: string | null;
+    snapshotBlob: Blob | null;
+    setDeviceId: import("react").Dispatch<import("react").SetStateAction<string | null>>;
+    canvasRef: import("react").RefObject<HTMLCanvasElement | null>;
+    error: string | null;
+    videoRef: import("react").RefObject<HTMLVideoElement | null>;
 };
+export default CameraPage;

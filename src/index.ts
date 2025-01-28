@@ -22,7 +22,10 @@ import useStateHistory from './useStateHistory'
 import useTimestamp from './useTimestamp'
 import useIdle from './useIdle'
 import useCamera from './useCamera'
-import useDevicesList from './useDevicelist'
+import useDevicesList, {
+  UseDevicesListResult,
+  UseDevicesListOptions,
+} from './useDevicelist'
 import usePermission from './usePermission'
 import useSupported from './useSupported'
 
@@ -52,4 +55,6 @@ export {
   useCookies,
   useInfiniteScroll,
   useStateHistory,
+  UseDevicesListResult,
+  UseDevicesListOptions,
 }

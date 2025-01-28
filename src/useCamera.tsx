@@ -1,134 +1,148 @@
-import { useRef, useState } from 'react'
+'use client'
 
-export default function useCamera(
-  customConstraints: MediaStreamConstraints = {
-    audio: false,
-    video: {
-      width: { ideal: 640 },
-      height: { ideal: 480 },
-      facingMode: 'user',
-      frameRate: { ideal: 30 },
-    },
-  }
-) {
-  const [loadingVideos, setLoadingVideos] = useState(true)
+import { useState, useEffect, useRef } from 'react'
+
+const CameraPage = () => {
+  const videoRef = useRef<HTMLVideoElement>(null)
+  const canvasRef = useRef<HTMLCanvasElement>(null)
+
   const [stream, setStream] = useState<MediaStream | null>(null)
-  // const [facingMode, setFacingMode] = useState<'user' | 'environment'>('user')
-  const facingMode = useRef<'user' | 'environment'>('user')
-  const [picture, setPicture] = useState<string | null>(null)
+  const [deviceId, setDeviceId] = useState<string | null>(null)
+  const [devices, setDevices] = useState<MediaDeviceInfo[]>([])
+  const [isFrontCamera, setIsFrontCamera] = useState(true)
+  const [snapshotBlob, setSnapshotBlob] = useState<Blob | null>(null)
+  const [error, setError] = useState<string | null>(null)
 
-  const start = async () => {
-    try {
-      setLoadingVideos(true)
+  // Fetch available devices
+  useEffect(() => {
+    const getDevices = async () => {
+      try {
+        // Request camera permission first
+        await navigator.mediaDevices.getUserMedia({ video: true })
 
-      // Enumerate devices and filter video inputs
-      const devices = await navigator.mediaDevices.enumerateDevices()
-      const videoDevices = devices.filter(
-        (device) => device.kind === 'videoinput'
-      )
+        const deviceList = await navigator.mediaDevices.enumerateDevices()
+        const videoDevices = deviceList.filter(
+          (device) => device.kind === 'videoinput'
+        )
+        setDevices(videoDevices)
 
-      if (videoDevices.length === 0) {
-        throw new Error('No video input devices found.')
+        if (videoDevices.length > 0 && !deviceId) {
+          setDeviceId(videoDevices[0].deviceId)
+        }
+      } catch (err) {
+        setError(
+          'Failed to access camera devices. Please ensure camera permissions are granted.'
+        )
+        console.error('Error accessing devices:', err)
       }
-      // Select device based on facing mode
-      const deviceId =
-        facingMode.current === 'environment'
-          ? videoDevices[videoDevices.length - 1]?.deviceId
-          : videoDevices[0]?.deviceId
-      // Update constraints with selected device
-      const constraints: MediaStreamConstraints = {
-        audio: false,
+    }
+
+    getDevices()
+  }, [deviceId])
+
+  // Start the camera with the selected device ID
+  const startCamera = async () => {
+    try {
+      setError(null)
+      // First try with exact constraints
+      const exactConstraints: MediaStreamConstraints = {
         video: {
-          ...(customConstraints.video as MediaTrackConstraints),
-          facingMode: facingMode.current,
-          deviceId: { exact: deviceId },
+          deviceId: deviceId ? { exact: deviceId } : undefined,
+          facingMode: isFrontCamera ? 'user' : 'environment',
         },
       }
 
-      const mediaStream = await navigator.mediaDevices.getUserMedia(constraints)
-
-      // Attach the stream to the video element
-      const videoElement = document.getElementById('video') as HTMLVideoElement
-      if (videoElement) {
-        videoElement.srcObject = mediaStream
-        videoElement.onloadedmetadata = () => {
-          videoElement.play()
+      try {
+        const newStream = await navigator.mediaDevices.getUserMedia(
+          exactConstraints
+        )
+        setStream(newStream)
+        if (videoRef.current) {
+          videoRef.current.srcObject = newStream
         }
+        return
+      } catch (exactError) {
+        console.log('Exact constraints failed, trying fallback...', exactError)
       }
 
-      setStream(mediaStream)
-    } catch (error) {
-      console.error('Error starting camera:', error)
-      alert(
-        "Camera could not be started. Please check your browser's permissions or try a different device."
+      // Fallback to more lenient constraints
+      const fallbackConstraints: MediaStreamConstraints = {
+        video: {
+          deviceId: deviceId ? { ideal: deviceId } : undefined,
+          facingMode: { ideal: isFrontCamera ? 'user' : 'environment' },
+        },
+      }
+
+      const newStream = await navigator.mediaDevices.getUserMedia(
+        fallbackConstraints
       )
-    } finally {
-      setLoadingVideos(false)
+      setStream(newStream)
+      if (videoRef.current) {
+        videoRef.current.srcObject = newStream
+      }
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : 'Unknown error occurred'
+      setError(`Failed to start camera: ${errorMessage}`)
+      console.error('Error starting camera:', error)
     }
   }
 
-  const stop = () => {
+  // Stop the camera
+  const stopCamera = () => {
     if (stream) {
       stream.getTracks().forEach((track) => track.stop())
       setStream(null)
-    }
-
-    const videoElement = document.getElementById('video') as HTMLVideoElement
-    if (videoElement) {
-      videoElement.srcObject = null
-    }
-  }
-
-  const switchCamera = async (mode: 'user' | 'environment') => {
-    stop()
-    facingMode.current = mode
-    start()
-  }
-  const refreshCamera = async () => {
-    stop()
-    start()
-  }
-
-  function takeSnapshot() {
-    const video = document.getElementsByTagName('video')[0]
-    const width = video.offsetWidth
-    const height = video.offsetHeight
-    const canvas = document.createElement('canvas')
-    canvas.width = width
-    canvas.height = height
-    const context = canvas.getContext('2d')
-    if (context) {
-      context.drawImage(video, 0, 0, width, height)
-    }
-    canvas.toBlob((blob) => {
-      // const newImg = document.createElement('img')
-      if (blob) {
-        const url = URL.createObjectURL(blob)
-        setPicture(url)
-      } else {
-        console.error('Failed to create blob')
+      if (videoRef.current) {
+        videoRef.current.srcObject = null
       }
+    }
+  }
 
-      // newImg.onload = () => {
-      //   // no longer need to read the blob so it's revoked
-      //   URL.revokeObjectURL(url)
-      // }
+  // Take a snapshot and get Blob
+  const takeSnapshot = () => {
+    if (videoRef.current && canvasRef.current) {
+      const video = videoRef.current
+      const canvas = canvasRef.current
+      const context = canvas.getContext('2d')
 
-      // URL.revokeObjectURL(url)
-      // newImg.src = url
-      // document.body.appendChild(newImg)
-    })
-    // setPicture(canvas.toDataURL('image/png'))
+      if (context && video.videoWidth && video.videoHeight) {
+        canvas.width = video.videoWidth
+        canvas.height = video.videoHeight
+        context.drawImage(video, 0, 0, canvas.width, canvas.height)
+
+        canvas.toBlob((blob) => {
+          if (blob) {
+            setSnapshotBlob(blob)
+
+            // Download the blob as an image file
+            const url = URL.createObjectURL(blob)
+            const a = document.createElement('a')
+            a.href = url
+            a.download = `snapshot-${new Date().toISOString()}.png`
+            a.click()
+            URL.revokeObjectURL(url)
+          }
+        }, 'image/png')
+      }
+    }
   }
 
   return {
-    stream,
-    loadingVideos,
-    start,
-    stop,
-    switchCamera,
-    picture,
+    startCamera,
+    stopCamera,
     takeSnapshot,
-    refreshCamera,
+    setIsFrontCamera,
+    isFrontCamera,
+    stream,
+    devices,
+    deviceId,
+    snapshotBlob,
+    setDeviceId,
+    canvasRef,
+    error,
+    videoRef,
   }
 }
+
+export default CameraPage
