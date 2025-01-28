@@ -19,4 +19,5 @@ import useCamera from './useCamera';
 import useDevicesList, { UseDevicesListResult, UseDevicesListOptions } from './useDevicelist';
 import usePermission from './usePermission';
 import useSupported from './useSupported';
-export { useCamera, useDevicesList, usePermission, useSupported, useTimestamp, useIdle, useBase64, useBreakpoints, DateLike, UseDateFormatOptions, useDateFormat, useRelativeDate, useRelativeDateBetween, useDebounce, useDraggable, useDropZone, useElementBounding, useFetch, useStorage, useNetwork, useScreenlock, useClipboard, useCookies, useInfiniteScroll, useStateHistory, UseDevicesListResult, UseDevicesListOptions, };
+import useIntersectionObserver from './useIntersectionObserver';
+export { useCamera, useDevicesList, usePermission, useSupported, useTimestamp, useIdle, useBase64, useBreakpoints, DateLike, UseDateFormatOptions, useDateFormat, useRelativeDate, useRelativeDateBetween, useDebounce, useDraggable, useDropZone, useElementBounding, useFetch, useStorage, useNetwork, useScreenlock, useClipboard, useCookies, useInfiniteScroll, useStateHistory, UseDevicesListResult, UseDevicesListOptions, useIntersectionObserver, };

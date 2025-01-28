@@ -30,5 +30,5 @@ interface UseIntersectionObserverReturn {
     resume: () => void;
     stop: () => void;
 }
-export declare function useIntersectionObserver(target: RefObject<Element>, callback: IntersectionObserverCallback, options?: UseIntersectionObserverOptions): UseIntersectionObserverReturn;
+export default function useIntersectionObserver(target: RefObject<Element>, callback: IntersectionObserverCallback, options?: UseIntersectionObserverOptions): UseIntersectionObserverReturn;
 export {};
