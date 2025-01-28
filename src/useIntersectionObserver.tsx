@@ -39,7 +39,7 @@ interface UseIntersectionObserverReturn {
 
 const defaultWindow = typeof window !== 'undefined' ? window : undefined
 
-export function useIntersectionObserver(
+export default function useIntersectionObserver(
   target: RefObject<Element>,
   callback: IntersectionObserverCallback,
   options: UseIntersectionObserverOptions = {}
