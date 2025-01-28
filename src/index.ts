@@ -28,6 +28,7 @@ import useDevicesList, {
 } from './useDevicelist'
 import usePermission from './usePermission'
 import useSupported from './useSupported'
+import useIntersectionObserver from './useIntersectionObserver'
 
 export {
   useCamera,
@@ -57,4 +58,5 @@ export {
   useStateHistory,
   UseDevicesListResult,
   UseDevicesListOptions,
+  useIntersectionObserver,
 }
