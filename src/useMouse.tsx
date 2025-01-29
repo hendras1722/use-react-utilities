@@ -1,0 +1,188 @@
+import { useEffect, useRef, useState } from 'react'
+import useEventListener from './useEventlistiner'
+
+// Types
+export type UseMouseCoordType = 'page' | 'client' | 'screen' | 'movement'
+export type UseMouseSourceType = 'mouse' | 'touch' | null
+export type UseMouseEventExtractor = (
+  event: MouseEvent | Touch
+) => [x: number, y: number] | null | undefined
+
+export interface Position {
+  x: number
+  y: number
+}
+
+export interface UseMouseOptions {
+  type?: UseMouseCoordType | UseMouseEventExtractor
+  target?: Window | EventTarget | null | undefined
+  touch?: boolean
+  scroll?: boolean
+  resetOnTouchEnds?: boolean
+  initialValue?: Position
+  eventFilter?: (handler: () => void, options: any) => void
+}
+
+// Constants
+const DEFAULT_OPTIONS: Required<Omit<UseMouseOptions, 'eventFilter'>> = {
+  type: 'page',
+  touch: true,
+  resetOnTouchEnds: false,
+  initialValue: { x: 0, y: 0 },
+  target: typeof window !== 'undefined' ? window : null,
+  scroll: true,
+}
+
+const BUILT_IN_EXTRACTORS: Record<UseMouseCoordType, UseMouseEventExtractor> = {
+  page: (event) => [event.pageX, event.pageY],
+  client: (event) => [event.clientX, event.clientY],
+  screen: (event) => [event.screenX, event.screenY],
+  movement: (event) =>
+    event instanceof Touch ? null : [event.movementX, event.movementY],
+} as const
+
+export function useMouse(options: UseMouseOptions = {}) {
+  const {
+    type = DEFAULT_OPTIONS.type,
+    touch = DEFAULT_OPTIONS.touch,
+    resetOnTouchEnds = DEFAULT_OPTIONS.resetOnTouchEnds,
+    initialValue = DEFAULT_OPTIONS.initialValue,
+    target = DEFAULT_OPTIONS.target,
+    scroll = DEFAULT_OPTIONS.scroll,
+    eventFilter,
+  } = options
+
+  // State
+  const [position, setPosition] = useState<Position>(initialValue)
+  const [sourceType, setSourceType] = useState<UseMouseSourceType>(null)
+
+  // Refs
+  const prevMouseEvent = useRef<MouseEvent | null>(null)
+  const scrollPosition = useRef({ x: 0, y: 0 })
+
+  // Utilities
+  const extractor =
+    typeof type === 'function' ? type : BUILT_IN_EXTRACTORS[type]
+
+  const updatePosition = (x: number, y: number) => {
+    setPosition({ x, y })
+  }
+
+  // Event Handlers
+  const handleMouse = (event: MouseEvent) => {
+    const result = extractor(event)
+    prevMouseEvent.current = event
+
+    if (result) {
+      updatePosition(result[0], result[1])
+      setSourceType('mouse')
+    }
+
+    if (window) {
+      scrollPosition.current = { x: window.scrollX, y: window.scrollY }
+    }
+  }
+
+  const handleTouch = (event: TouchEvent) => {
+    if (event.touches.length > 0) {
+      const result = extractor(event.touches[0])
+      if (result) {
+        updatePosition(result[0], result[1])
+        setSourceType('touch')
+      }
+    }
+  }
+
+  const handleScroll = () => {
+    if (!prevMouseEvent.current || !window) return
+
+    const pos = extractor(prevMouseEvent.current)
+    if (prevMouseEvent.current instanceof MouseEvent && pos) {
+      const scrollDelta = {
+        x: window.scrollX - scrollPosition.current.x,
+        y: window.scrollY - scrollPosition.current.y,
+      }
+      updatePosition(pos[0] + scrollDelta.x, pos[1] + scrollDelta.y)
+    }
+  }
+
+  const resetPosition = () => {
+    updatePosition(initialValue.x, initialValue.y)
+  }
+
+  // Event Handler Wrappers
+  const wrapEventHandler = <T extends (...args: any[]) => void>(
+    handler: T
+  ): T =>
+    (eventFilter
+      ? (...args: Parameters<T>) =>
+          eventFilter(() => handler(...args), {} as any)
+      : handler) as T
+
+  const mouseHandlerWrapper = wrapEventHandler(handleMouse)
+  const touchHandlerWrapper = wrapEventHandler(handleTouch)
+  const scrollHandlerWrapper = wrapEventHandler(handleScroll)
+
+  // Effect for event listeners
+  useEffect(() => {
+    if (!target) return
+
+    const listenerOptions = { passive: true }
+    const cleanupFunctions: Array<() => void> = []
+
+    // Mouse events
+    const mouseCleanup =
+      useEventListener(
+        target,
+        ['mousemove', 'dragover'],
+        mouseHandlerWrapper,
+        listenerOptions
+      ) ?? (() => {})
+    cleanupFunctions.push(mouseCleanup)
+
+    // Touch events
+    if (touch && type !== 'movement') {
+      const touchCleanup =
+        useEventListener(
+          target,
+          ['touchstart', 'touchmove'],
+          touchHandlerWrapper,
+          listenerOptions
+        ) ?? (() => {})
+      cleanupFunctions.push(touchCleanup)
+
+      if (resetOnTouchEnds) {
+        const touchEndCleanup =
+          useEventListener(
+            target,
+            'touchend',
+            resetPosition,
+            listenerOptions
+          ) ?? (() => {})
+        cleanupFunctions.push(touchEndCleanup)
+      }
+    }
+
+    // Scroll events
+    if (scroll && type === 'page') {
+      const scrollCleanup =
+        useEventListener(
+          window,
+          'scroll',
+          scrollHandlerWrapper,
+          listenerOptions
+        ) ?? (() => {})
+      cleanupFunctions.push(scrollCleanup)
+    }
+
+    return () => cleanupFunctions.forEach((cleanup) => cleanup())
+  }, [target, touch, type, resetOnTouchEnds, scroll])
+
+  return {
+    x: position.x,
+    y: position.y,
+    sourceType,
+  }
+}
+
+export type UseMouseReturn = ReturnType<typeof useMouse>

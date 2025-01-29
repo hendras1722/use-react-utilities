@@ -29,6 +29,9 @@ import useDevicesList, {
 import usePermission from './usePermission'
 import useSupported from './useSupported'
 import useIntersectionObserver from './useIntersectionObserver'
+import useAnimate from './useAnimate'
+import { useMouse } from './useMouse'
+import { useMouseInElement } from './useMouseInElement'
 
 export {
   useCamera,
@@ -59,4 +62,7 @@ export {
   UseDevicesListResult,
   UseDevicesListOptions,
   useIntersectionObserver,
+  useAnimate,
+  useMouse,
+  useMouseInElement,
 }
