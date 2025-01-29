@@ -32,6 +32,7 @@ import useIntersectionObserver from './useIntersectionObserver'
 import useAnimate from './useAnimate'
 import { useMouse } from './useMouse'
 import { useMouseInElement } from './useMouseInElement'
+import { useClickOutside } from './useClickOutside'
 
 export {
   useCamera,
@@ -65,4 +66,5 @@ export {
   useAnimate,
   useMouse,
   useMouseInElement,
+  useClickOutside,
 }
