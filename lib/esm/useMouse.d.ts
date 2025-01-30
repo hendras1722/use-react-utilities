@@ -7,7 +7,7 @@ export interface Position {
 }
 export interface UseMouseOptions {
     type?: UseMouseCoordType | UseMouseEventExtractor;
-    target?: Window | EventTarget | null | undefined;
+    target?: Window | EventTarget | null;
     touch?: boolean;
     scroll?: boolean;
     resetOnTouchEnds?: boolean;
@@ -19,4 +19,7 @@ export declare function useMouse(options?: UseMouseOptions): {
     y: number;
     sourceType: UseMouseSourceType;
 };
+export interface MouseInElementOptions extends UseMouseOptions {
+    handleOutside?: boolean;
+}
 export type UseMouseReturn = ReturnType<typeof useMouse>;

@@ -33,8 +33,12 @@ import useAnimate from './useAnimate'
 import { useMouse } from './useMouse'
 import { useMouseInElement } from './useMouseInElement'
 import { useClickOutside } from './useClickOutside'
+import { useImage } from './useImage'
+import { useObjectUrl } from './useObjecturl'
 
 export {
+  useImage,
+  useObjectUrl,
   useCamera,
   useDevicesList,
   usePermission,
