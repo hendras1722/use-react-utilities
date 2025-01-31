@@ -35,8 +35,18 @@ import { useMouseInElement } from './useMouseInElement'
 import { useClickOutside } from './useClickOutside'
 import { useImage } from './useImage'
 import { useObjectUrl } from './useObjecturl'
+import { useCycleList } from './useCyclelist'
+import { useFullscreen } from './useFullscreen'
+import { useTextSelection } from './useTextSelection'
+import { useVirtualList } from './useVirtuallist'
+import { useDocumentVisibility } from './useDocumentvisibilty'
 
 export {
+  useDocumentVisibility,
+  useFullscreen,
+  useCycleList,
+  useTextSelection,
+  useVirtualList,
   useImage,
   useObjectUrl,
   useCamera,
