@@ -16,6 +16,7 @@ interface UseDraggableOptions {
     onStart?: (position: Position, event: PointerEvent) => void | false;
     onMove?: (position: Position, event: PointerEvent) => void;
     onEnd?: (position: Position, event: PointerEvent) => void;
+    initialPosition?: Position;
 }
 export default function useDraggable(targetRef: React.RefObject<HTMLElement>, options?: UseDraggableOptions): {
     x: number;

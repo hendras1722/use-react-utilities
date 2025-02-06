@@ -1,8 +1,5 @@
-'use client'
 
 import { useState, useEffect, useRef, useCallback } from 'react'
-
-// type PointerType = 'mouse' | 'touch' | 'pen'
 
 interface Position {
   x: number
@@ -24,6 +21,7 @@ interface UseDraggableOptions {
   onStart?: (position: Position, event: PointerEvent) => void | false
   onMove?: (position: Position, event: PointerEvent) => void
   onEnd?: (position: Position, event: PointerEvent) => void
+  initialPosition?: Position;
 }
 
 export default function useDraggable(
@@ -38,9 +36,14 @@ export default function useDraggable(
     onStart,
     onMove,
     onEnd,
+    initialPosition = { x: 0, y: 0 },
   } = options
 
-  const [position, setPosition] = useState<Position>({ x: 0, y: 0 })
+  const [position, setPosition] = useState<Position>(initialPosition) // Gunakan initialPosition
+
+  // State untuk menandakan apakah initialPosition sudah di-set atau belum
+  const [isInitialPositionSet, setIsInitialPositionSet] = useState(false);
+
   const [isDragging, setIsDragging] = useState(false)
   const dragStartRef = useRef<Position | null>(null)
   const initialPositionRef = useRef<Position>({ x: 0, y: 0 })
@@ -217,10 +220,13 @@ export default function useDraggable(
   }, [targetRef, handlePointerDown, handlePointerMove, handlePointerUp])
 
   useEffect(() => {
-    if (boundaries) {
-      setPosition({ x: Number(boundaries.minX), y: Number(boundaries.minY) })
-    }
-  }, [])
+      // Set initial position only once when the component mounts
+      if (!isInitialPositionSet && initialPosition) {
+          setPosition(initialPosition);
+          setIsInitialPositionSet(true);
+      }
+  }, [initialPosition, isInitialPositionSet]);
+
 
   return { x: position.x, y: position.y, isDragging }
 }
