@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef, useCallback } from 'react'
 
 interface Position {
@@ -21,7 +20,8 @@ interface UseDraggableOptions {
   onStart?: (position: Position, event: PointerEvent) => void | false
   onMove?: (position: Position, event: PointerEvent) => void
   onEnd?: (position: Position, event: PointerEvent) => void
-  initialPosition?: Position;
+  initialPosition?: Position
+  enableDrag?: boolean
 }
 
 export default function useDraggable(
@@ -37,12 +37,13 @@ export default function useDraggable(
     onMove,
     onEnd,
     initialPosition = { x: 0, y: 0 },
+    enableDrag = true,
   } = options
 
   const [position, setPosition] = useState<Position>(initialPosition) // Gunakan initialPosition
 
   // State untuk menandakan apakah initialPosition sudah di-set atau belum
-  const [isInitialPositionSet, setIsInitialPositionSet] = useState(false);
+  const [isInitialPositionSet, setIsInitialPositionSet] = useState(false)
 
   const [isDragging, setIsDragging] = useState(false)
   const dragStartRef = useRef<Position | null>(null)
@@ -62,15 +63,28 @@ export default function useDraggable(
     }
   }, [])
 
+  const isClickableElement = (element: HTMLElement): boolean => {
+    if (!element) return false
+
+    const clickableTags = ['BUTTON', 'A', 'INPUT']
+    const hasClickableRole = element.getAttribute('role') === 'button'
+
+    return clickableTags.includes(element.tagName) || hasClickableRole
+  }
+
   const handlePointerDown = useCallback(
     (e: PointerEvent) => {
+      // console.log("handlePointerDown triggered");
       const target = targetRef.current
       if (!target) return
 
-      // Always capture pointer immediately
+      if (isClickableElement(e.target as HTMLElement)) {
+        // console.log("Clickable element clicked, not dragging");
+        return
+      }
+
       target.setPointerCapture(e.pointerId)
 
-      // Use clientX/Y for both mouse and touch
       dragStartRef.current = {
         x: e.clientX,
         y: e.clientY,
@@ -81,20 +95,46 @@ export default function useDraggable(
         y: position.y,
       }
 
-      if (onStart) {
-        const startPos = { x: position.x, y: position.y }
-        if (onStart(startPos, e) === false) return
+      // Deteksi drag yang tidak disengaja
+      const initialX = e.clientX
+      const initialY = e.clientY
+      const threshold = 5 // Contoh: 5 piksel
+      const checkDragIntent = (moveEvent: PointerEvent) => {
+        const deltaX = Math.abs(moveEvent.clientX - initialX)
+        const deltaY = Math.abs(moveEvent.clientY - initialY)
+        if (deltaX > threshold || deltaY > threshold) {
+          // Drag disengaja
+          window.removeEventListener('pointermove', checkDragIntent) // Hapus listener sementara
+          startDragging(e) // Lanjutkan dengan memulai drag
+        }
       }
 
-      setIsDragging(true)
+      const startDragging = (event: PointerEvent) => {
+        if (!enableDrag) return
+        if (onStart) {
+          const startPos = { x: position.x, y: position.y }
+          if (onStart(startPos, event) === false) return
+        }
 
-      // Cancel any ongoing animation frame
-      if (rafRef.current) {
-        cancelAnimationFrame(rafRef.current)
+        setIsDragging(true)
+
+        if (rafRef.current) {
+          cancelAnimationFrame(rafRef.current)
+        }
+
+        if (preventDefault) event.preventDefault()
+        if (stopPropagation) event.stopPropagation()
       }
 
-      if (preventDefault) e.preventDefault()
-      if (stopPropagation) e.stopPropagation()
+      // Tambahkan listener sementara untuk mendeteksi niat drag
+      window.addEventListener('pointermove', checkDragIntent)
+      window.addEventListener(
+        'pointerup',
+        () => {
+          window.removeEventListener('pointermove', checkDragIntent) // Bersihkan jika pointer diangkat
+        },
+        { once: true }
+      ) // Hapus listener setelah satu kali dijalankan
     },
     [targetRef, onStart, preventDefault, stopPropagation, position]
   )
@@ -220,13 +260,18 @@ export default function useDraggable(
   }, [targetRef, handlePointerDown, handlePointerMove, handlePointerUp])
 
   useEffect(() => {
-      // Set initial position only once when the component mounts
-      if (!isInitialPositionSet && initialPosition) {
-          setPosition(initialPosition);
-          setIsInitialPositionSet(true);
-      }
-  }, [initialPosition, isInitialPositionSet]);
+    // Set initial position only once when the component mounts
+    if (!isInitialPositionSet && initialPosition) {
+      setPosition(initialPosition)
+      setIsInitialPositionSet(true)
+    }
+  }, [initialPosition, isInitialPositionSet])
 
+  useEffect(() => {
+    if (boundaries) {
+      //setPosition({ x: Number(boundaries.minX), y: Number(boundaries.minY) })
+    }
+  }, [])
 
   return { x: position.x, y: position.y, isDragging }
 }
