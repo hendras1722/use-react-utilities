@@ -40,10 +40,9 @@ import { useFullscreen } from './useFullscreen'
 import { useTextSelection } from './useTextSelection'
 import { useVirtualList } from './useVirtuallist'
 import { useDocumentVisibility } from './useDocumentvisibilty'
-import { CaseConverter } from './useChangeCaseType'
+export { useChangeCase } from './useChangeCaseType'
 
 export {
-  CaseConverter,
   useDocumentVisibility,
   useFullscreen,
   useCycleList,
