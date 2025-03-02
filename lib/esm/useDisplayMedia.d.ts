@@ -1,17 +1,12 @@
-interface UseDisplayMediaOptions {
-    enabled?: boolean;
-    video?: boolean | MediaTrackConstraints | undefined;
-    audio?: boolean | MediaTrackConstraints | undefined;
-    navigator?: Navigator;
+interface usDisplayMediaOptions {
+    audio?: boolean;
+    video?: boolean | MediaTrackConstraints;
 }
-export declare function useDisplayMedia(options?: UseDisplayMediaOptions): {
-    isSupported: boolean;
-    stream: MediaStream | undefined;
+declare function useDisplayMedia(options?: usDisplayMediaOptions): {
+    stream: MediaStream | null;
     error: Error | null;
-    start: () => Promise<MediaStream | undefined>;
-    stop: () => void;
-    enabled: boolean;
-    setEnabled: import("react").Dispatch<import("react").SetStateAction<boolean>>;
+    startSharing: () => Promise<void>;
+    stopSharing: () => void;
+    isSharing: boolean;
 };
-export type UseDisplayMediaReturn = ReturnType<typeof useDisplayMedia>;
-export {};
+export { useDisplayMedia };
