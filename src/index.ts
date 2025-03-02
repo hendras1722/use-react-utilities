@@ -41,6 +41,7 @@ import { useTextSelection } from './useTextSelection'
 import { useVirtualList } from './useVirtuallist'
 import { useDocumentVisibility } from './useDocumentvisibilty'
 export { useChangeCase } from './useChangeCaseType'
+export { useDisplayMedia } from './useDisplayMedia'
 
 export {
   useDocumentVisibility,

@@ -1,4 +1,3 @@
-type HttpMethod = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH' | 'HEAD' | 'OPTIONS';
 type ResponseType = 'json' | 'text' | 'blob' | 'arrayBuffer' | 'formData';
 interface BeforeFetchContext {
     url: string;
@@ -14,12 +13,13 @@ interface OnFetchErrorContext<T = any> {
     data: T | null;
     response: Response | null;
 }
-interface UseFetchOptions<T = any> {
+export interface UseFetchOptions<T = any> {
     responseType?: ResponseType;
-    method?: HttpMethod;
-    immediate?: boolean;
-    timeout?: number;
-    updateDataOnError?: boolean;
+    revalidateOnFocus?: boolean;
+    revalidateOnReconnect?: boolean;
+    dedupingInterval?: number;
+    errorRetryInterval?: number;
+    errorRetryCount?: number;
     initialData?: T | null;
     payload?: unknown;
     params?: Record<string, any>;
@@ -27,18 +27,13 @@ interface UseFetchOptions<T = any> {
     beforeFetch?: (ctx: BeforeFetchContext) => Promise<Partial<BeforeFetchContext> | void> | Partial<BeforeFetchContext> | void;
     afterFetch?: (ctx: AfterFetchContext<T>) => Promise<Partial<AfterFetchContext<T>>> | Partial<AfterFetchContext<T>>;
     onFetchError?: (ctx: OnFetchErrorContext<T>) => Promise<Partial<OnFetchErrorContext<T>>> | Partial<OnFetchErrorContext<T>>;
+    useCache?: boolean;
 }
-export default function useFetch<T = any>(url: string, fetchOptions?: RequestInit, options?: UseFetchOptions<T>): {
-    isFinished: boolean;
-    isFetching: boolean;
-    statusCode: number | null;
-    response: Response | null;
+export default function useFetch<T = any>(url: string | null, // Allow null url
+fetchOptions?: RequestInit, options?: UseFetchOptions<T>): {
+    data: T | undefined;
     error: any;
-    data: T | null;
-    canAbort: boolean;
-    aborted: boolean;
-    abort: () => void;
-    execute: (throwOnFailed?: boolean) => Promise<Response | null>;
-    refetch: () => Promise<Response | null>;
+    isLoading: boolean;
+    mutate: () => void;
 };
 export {};
