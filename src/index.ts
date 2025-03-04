@@ -42,6 +42,8 @@ import { useVirtualList } from './useVirtuallist'
 import { useDocumentVisibility } from './useDocumentvisibilty'
 export { useChangeCase } from './useChangeCaseType'
 export { useDisplayMedia } from './useDisplayMedia'
+export { useToggle } from './useToggle'
+export { useArrayState } from './useArrayState'
 
 export {
   useDocumentVisibility,

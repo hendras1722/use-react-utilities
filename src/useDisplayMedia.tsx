@@ -1,11 +1,11 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 
-interface usDisplayMediaOptions {
+interface useDisplayMediaOptions {
   audio?: boolean
   video?: boolean | MediaTrackConstraints
 }
 
-function useDisplayMedia(options: usDisplayMediaOptions = {}) {
+function useDisplayMedia(options: useDisplayMediaOptions = {}) {
   const { audio = false, video = true } = options
 
   const [stream, setStream] = useState<MediaStream | null>(null)
