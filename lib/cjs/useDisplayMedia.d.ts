@@ -1,8 +1,8 @@
-interface useDisplayMediaOptions {
+interface UseDisplayMediaOptions {
     audio?: boolean;
     video?: boolean | MediaTrackConstraints;
 }
-declare function useDisplayMedia(options?: useDisplayMediaOptions): {
+declare function useDisplayMedia(options?: UseDisplayMediaOptions): {
     stream: MediaStream | null;
     error: Error | null;
     startSharing: () => Promise<void>;

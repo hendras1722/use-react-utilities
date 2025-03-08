@@ -2,6 +2,7 @@ type ArrayStateActions<T> = {
     add: (item: T) => void;
     remove: (index: number) => void;
     clear: () => void;
+    replace: (index: number, item: T | ((item: T) => T)) => void;
 };
-declare const useArrayState: <T>(initialItems?: T[]) => [T[], ArrayStateActions<T>];
-export { useArrayState };
+export declare const useArrayState: <T>(initialItems?: T[]) => [T[], ArrayStateActions<T>];
+export default useArrayState;

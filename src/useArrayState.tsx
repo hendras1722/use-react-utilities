@@ -4,9 +4,10 @@ type ArrayStateActions<T> = {
   add: (item: T) => void
   remove: (index: number) => void
   clear: () => void
+  replace: (index: number, item: T | ((item: T) => T)) => void
 }
 
-const useArrayState = <T,>(
+export const useArrayState = <T,>(
   initialItems: T[] = []
 ): [T[], ArrayStateActions<T>] => {
   const [items, setItems] = useState<T[]>(initialItems)
@@ -14,6 +15,17 @@ const useArrayState = <T,>(
   const add = useCallback(
     (item: T) => {
       setItems((prevItems) => [...prevItems, item])
+    },
+    [setItems]
+  )
+
+  const replace = useCallback(
+    (index: number, item: T) => {
+      setItems((prevItems) => {
+        const newItems = [...prevItems]
+        newItems[index] = item
+        return newItems
+      })
     },
     [setItems]
   )
@@ -33,7 +45,7 @@ const useArrayState = <T,>(
     setItems([])
   }, [setItems])
 
-  return [items, { add, remove, clear }]
+  return [items, { add, remove, clear, replace }]
 }
 
-export { useArrayState }
+export default useArrayState
