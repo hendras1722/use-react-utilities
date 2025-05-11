@@ -192,6 +192,7 @@ export default function useFetch<T = any>(
   const lastFetchedTimeRef = useRef<number | null>(null)
   const retryCountRef = useRef(0)
   const timeoutIdRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const isRequestInProgressRef = useRef(false)
 
   const isClient = typeof window !== 'undefined' // Check if we're on the client-side
 
@@ -200,7 +201,15 @@ export default function useFetch<T = any>(
       return
     }
 
+    // Prevent duplicate requests - especially important for POST
+    if (isRequestInProgressRef.current && manual) {
+      // console.log('Request already in progress, skipping duplicate request')
+      return
+    }
+
+    isRequestInProgressRef.current = true
     setIsLoading(true)
+
     try {
       const fetchedData = await fetcher<T>(url, fetchOptions, options)
       setData(fetchedData)
@@ -223,12 +232,17 @@ export default function useFetch<T = any>(
           `fetchData: Retrying fetch, attempt ${retryCountRef.current}/${errorRetryCount}`
         )
         timeoutIdRef.current = setTimeout(() => {
+          isRequestInProgressRef.current = false // Reset flag before retry
           fetchData()
         }, errorRetryInterval)
       } else {
         console.log('fetchData: Max retries reached, not retrying further')
       }
     } finally {
+      if (!timeoutIdRef.current) {
+        // Don't reset if we're about to retry
+        isRequestInProgressRef.current = false
+      }
       setIsLoading(false)
     }
   }, [
@@ -239,6 +253,7 @@ export default function useFetch<T = any>(
     useCache,
     errorRetryCount,
     errorRetryInterval,
+    manual, // Add manual to dependencies
   ])
 
   const mutate = useCallback(() => {
@@ -294,7 +309,7 @@ export default function useFetch<T = any>(
     }
 
     window.addEventListener('online', handleReconnect)
-    return () => window.removeEventListener('focus', handleReconnect)
+    return () => window.removeEventListener('online', handleReconnect) // Fixed: was 'focus' before
   }, [url, revalidateOnReconnect, revalidate, isClient])
 
   //Clear timeout on unmount
