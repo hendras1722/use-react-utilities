@@ -43,7 +43,7 @@ import { useDocumentVisibility } from './useDocumentvisibilty'
 export { useChangeCase } from './useChangeCaseType'
 export { useDisplayMedia } from './useDisplayMedia'
 export { useToggle } from './useToggle'
-export { useArrayState } from './useArrayState'
+import { useArrayState } from './useArrayState'
 
 export {
   useDocumentVisibility,
@@ -85,4 +85,5 @@ export {
   useMouse,
   useMouseInElement,
   useClickOutside,
+  useArrayState,
 }
