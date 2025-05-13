@@ -120,8 +120,6 @@ const fetcher = async <T,>(
     },
   }
 
-  console.log('context', context)
-
   try {
     if (beforeFetch) {
       Object.assign(context, await beforeFetch(context))

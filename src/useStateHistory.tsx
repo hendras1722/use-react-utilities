@@ -110,7 +110,6 @@ export default function useRefHistory<Raw, Serialized = Raw>(
   }, [value, isTracking, capacity, dump, cloneValue, areValuesEqual])
 
   useEffect(() => {
-    console.log(isInitialized)
     if (!isInitialized.current) {
       isInitialized.current = true
       // Initialize with first value
