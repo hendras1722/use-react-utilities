@@ -44,7 +44,7 @@ export { useChangeCase } from './useChangeCaseType'
 export { useDisplayMedia } from './useDisplayMedia'
 export { useToggle } from './useToggle'
 import { useArrayState } from './useArrayState'
-export {AfterFetchContext,BeforeFetchContext,OnFetchErrorContext,CreateFetchOptions,UseFetchOptions,UseFetchReturn,createFetch, useFetch} from './useFetch'
+import useFetch from './useFetch'
 export { useIdlePage } from './useIdlePage'
 
 export {
@@ -87,4 +87,5 @@ export {
   useMouseInElement,
   useClickOutside,
   useArrayState,
+  useFetch,
 }
