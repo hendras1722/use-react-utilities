@@ -13,8 +13,6 @@ interface ProductCardProps {
   children: ReactNode
 }
 
-
-
 interface SlotProps {
   product: Product;
   AddToCart: () => void
@@ -53,11 +51,9 @@ function ProductCard({ product, children }: Readonly<ProductCardProps>) {
         )}
       </div>
 
-      {slots.footer && (
-        <div className="bg-gray-50 p-4 border-t">
-          {scopedSlots.footer ? scopedSlots.footer(combinedProps) : slots.footer}
-        </div>
-      )}
+      <div className="bg-gray-50 p-4 border-t">
+        {scopedSlots.footer ? scopedSlots.footer(combinedProps) : slots.footer}
+      </div>
     </div>
   )
 }
@@ -73,6 +69,9 @@ export default function App() {
   return (
     <div className="min-h-screen bg-gray-100 p-8">
       <div className="max-w-2xl mx-auto space-y-8">
+
+
+
         <ProductCard product={product}>
           <Template name="header">
             🔥 New Product
@@ -99,9 +98,16 @@ export default function App() {
           </Template>
 
           <Template name="footer">
-            <button className="w-full bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 transition">
-              Add to cart
-            </button>
+            {
+              (props: SlotProps) => (
+                <button
+                  className="bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded"
+                  onClick={props.AddToCart}
+                >
+                  Add to Cart
+                </button>
+              )
+            }
           </Template>
         </ProductCard>
       </div>

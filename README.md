@@ -26,11 +26,11 @@ Here is how to import and use the hooks and components from this library.
 
 Fetches the name of a color from its hex value. This is useful for color tools, design systems, or any feature that needs to display a human-readable color name.
 
-```jsx
-import { colorFromName, useRef } from 'use-react-utilities';
+```tsx
+import { colorFromName, ref } from 'use-react-utilities';
 
 export default function ColorPicker() {
-  const color = useRef('#FFF')
+  const color = ref('#FFF')
   const colorName = colorFromName(color.value);
 
   return (
@@ -52,11 +52,11 @@ export default function ColorPicker() {
 
 Creates a memoized value that only recalculates when its dependencies change. It's perfect for optimizing expensive calculations.
 
-```jsx
-import { useComputed, useRef } from 'use-react-utilities';
+```tsx
+import { useComputed, ref } from 'use-react-utilities';
 
 export default function Counter() {
-  const count = useRef(0)
+  const count = ref(0)
 
   // The `double` value is automatically updated when `count` changes
   const double = useComputed(() => count.value * 2);
@@ -77,7 +77,7 @@ export default function Counter() {
 
 Creates and renders a specified number of component instances. This is useful for storyboarding, testing, or decorative UI elements.
 
-```jsx
+```tsx
 import React from 'react';
 import { deleteDuplicate } from 'use-react-utilities';
 
@@ -99,12 +99,12 @@ console.log(uniqueUsers)
 
 Manages form state efficiently. It simplifies handling input changes and form submissions.
 
-```jsx
+```tsx
 import React from 'react';
-import { useFormData, useRef } from 'use-react-utilities';
+import { useFormData, ref } from 'use-react-utilities';
 
 function LoginForm() {
-  const data = useRef({
+  const data = ref({
     email: '',
     password: ''
   })
@@ -141,7 +141,7 @@ function LoginForm() {
 
 Provides `onMounted` and `onUnmounted` lifecycle hooks, similar to Vue's `onMounted` and `onUnmounted`.
 
-```jsx
+```tsx
 import React from 'react';
 import { onMounted, OnUnmounted, onUpdated, onBeforeUpdate, onBeforeUnmount, onBeforeMount } from 'use-react-utilities';
 
@@ -171,16 +171,16 @@ function MyComponent() {
 
 ---
 
-### `useRef`
+### `ref`
 
-A custom `useRef` hook that may include additional functionality for handling refs in a more declarative way.
+A custom `ref` hook that may include additional functionality for handling refs in a more declarative way.
 
-```jsx
+```tsx
 import React from 'react';
-import { useRef } from 'use-react-utilities';
+import { ref } from 'use-react-utilities';
 
 function FocusInput() {
-  const search = useRef(0);
+  const search = ref(0);
 
   return (
     <div>
@@ -196,11 +196,11 @@ function FocusInput() {
 
 Runs an effect immediately and automatically re-runs it whenever any of its dependencies change. Unlike `useEffect`, you don't need to specify a dependency array.
 
-```jsx
-import { useWatch, useRef } from 'use-react-utilities';
+```tsx
+import { useWatch, ref } from 'use-react-utilities';
 
 function Watcher() {
-   const search = useRef(0);
+   const search = ref(0);
 
   useWatch(search.value, (newValue, oldValue) => {
     console.log(`The current count is: ${newValue, oldValue}`);
@@ -221,7 +221,7 @@ function Watcher() {
 
 Use the `<If>` component for clean, declarative conditional rendering instead of ternary operators.
 
-```jsx
+```tsx
 import React from 'react';
 import { ConditionalGroup, If, ElseIf, Else } from 'use-react-utilities/components';
 
@@ -240,9 +240,9 @@ const UserGreeting = ({ user }) => {
 
 ### `<Each>` Component
 
-Use the `<Each>` component to iterate over an array without using `.map()` inside your JSX, making your component cleaner.
+Use the `<Each>` component to iterate over an array without using `.map()` inside your tsx, making your component cleaner.
 
-```jsx
+```tsx
 import React from 'react';
 import { Each } from 'use-react-utilities/components';
 
@@ -268,7 +268,7 @@ const PostList = ({ posts }) => {
 
 Use `<Component>` to create dynamic, polymorphic components and `<Slot>` to create flexible component layouts that can be filled by parent components.
 
-```jsx
+```tsx
 import type { ReactNode } from 'react'
 import { Template, useSlots } from 'use-react-utilities'
 
@@ -293,7 +293,7 @@ function ProductCard({ product, children }: Readonly<ProductCardProps>) {
   const { slots, scopedSlots } = useSlots<Product>(children)
 
   function AddToCart() {
-    alert('wewe')
+    alert('test add to cart')
   }
 
   const slotProps = {
@@ -322,11 +322,9 @@ function ProductCard({ product, children }: Readonly<ProductCardProps>) {
         )}
       </div>
 
-      {slots.footer && (
-        <div className="bg-gray-50 p-4 border-t">
-          {scopedSlots.footer ? scopedSlots.footer(combinedProps) : slots.footer}
-        </div>
-      )}
+      <div className="bg-gray-50 p-4 border-t">
+        {scopedSlots.footer ? scopedSlots.footer(combinedProps) : slots.footer}
+      </div>
     </div>
   )
 }
@@ -346,7 +344,6 @@ export default function App() {
           <Template name="header">
             🔥 New Product
           </Template>
-
           <Template name="body">
             {(prod: Product) => (
               <div className="space-y-3">
@@ -366,12 +363,17 @@ export default function App() {
               </div>
             )}
           </Template>
-
-          {/* Static Slot - Tidak butuh akses data */}
           <Template name="footer">
-            <button className="w-full bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 transition">
-              Add to cart
-            </button>
+            {
+              (props: SlotProps) => (
+                <button
+                  className="bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded"
+                  onClick={props.AddToCart}
+                >
+                  Add to Cart
+                </button>
+              )
+            }
           </Template>
         </ProductCard>
       </div>
