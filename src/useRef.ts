@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from 'react';
 
-export function useRef<T>(initialValue: T): { value: T } {
+export function ref<T>(initialValue: T): { value: T } {
   const [value, setValue] = useState(initialValue);
 
   const ref = useMemo(() => ({

@@ -1,13 +1,13 @@
 import { useEffect, useLayoutEffect } from 'react';
-import { useRef } from './useRef';
+import { ref } from './useRef';
 
-export function OnMounted(callback: () => void) {
+export function onMounted(callback: () => void) {
   useEffect(() => {
     callback();
   }, []);
 }
 
-export function OnUnmounted(callback: () => void) {
+export function onUnmounted(callback: () => void) {
   useEffect(() => {
     return () => {
       callback();
@@ -15,8 +15,8 @@ export function OnUnmounted(callback: () => void) {
   }, []);
 }
 
-export function OnUpdated(callback: () => void) {
-  const hasMounted = useRef(false);
+export function onUpdated(callback: () => void) {
+  const hasMounted = ref(false);
   useEffect(() => {
     if (hasMounted.value) {
       callback();
@@ -26,8 +26,8 @@ export function OnUpdated(callback: () => void) {
   });
 }
 
-export function OnBeforeUpdate(callback: () => void) {
-  const isFirstRender = useRef(true);
+export function onBeforeUpdate(callback: () => void) {
+  const isFirstRender = ref(true);
   useLayoutEffect(() => {
     if (isFirstRender.value) {
       isFirstRender.value = false;
@@ -37,8 +37,8 @@ export function OnBeforeUpdate(callback: () => void) {
   });
 }
 
-export function OnBeforeUnmount(callback: () => void) {
-  const callbackRef = useRef(callback);
+export function onBeforeUnmount(callback: () => void) {
+  const callbackRef = ref(callback);
 
   useEffect(() => {
     return () => {
@@ -47,8 +47,8 @@ export function OnBeforeUnmount(callback: () => void) {
   }, []);
 }
 
-export function OnBeforeMount(callback: () => void) {
-  const hasRun = useRef(false);
+export function onBeforeMount(callback: () => void) {
+  const hasRun = ref(false);
   if (!hasRun.value) {
     callback();
     hasRun.value = true

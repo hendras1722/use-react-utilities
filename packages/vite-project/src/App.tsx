@@ -28,9 +28,14 @@ function ProductCard({ product, children }: Readonly<ProductCardProps>) {
   }
 
   const slotProps = {
-    product,
     AddToCart
   } as SlotProps;
+
+  const combinedProps: Product & SlotProps = {
+    ...product,
+    ...slotProps,
+  };
+
   return (
     <div className="border rounded-lg shadow-md overflow-hidden bg-white">
       {slots.header && (
@@ -50,7 +55,7 @@ function ProductCard({ product, children }: Readonly<ProductCardProps>) {
 
       {slots.footer && (
         <div className="bg-gray-50 p-4 border-t">
-          {scopedSlots.footer ? scopedSlots.footer(slotProps) : slots.footer}
+          {scopedSlots.footer ? scopedSlots.footer(combinedProps) : slots.footer}
         </div>
       )}
     </div>
@@ -93,7 +98,6 @@ export default function App() {
             )}
           </Template>
 
-          {/* Static Slot - Tidak butuh akses data */}
           <Template name="footer">
             <button className="w-full bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 transition">
               Add to cart

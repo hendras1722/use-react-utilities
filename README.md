@@ -143,7 +143,7 @@ Provides `onMounted` and `onUnmounted` lifecycle hooks, similar to Vue's `onMoun
 
 ```jsx
 import React from 'react';
-import { onMounted, OnUnmounted, OnUpdated, OnBeforeUpdate, OnBeforeUnmount, OnBeforeMount } from 'use-react-utilities';
+import { onMounted, OnUnmounted, onUpdated, onBeforeUpdate, onBeforeUnmount, onBeforeMount } from 'use-react-utilities';
 
 function MyComponent() {
   onMounted() {
@@ -152,16 +152,16 @@ function MyComponent() {
   onUnmounted(){
     console.log('Component will be unmounted!');
   }
-  OnUpdated(){
+  onUpdated(){
     console.log('Component will be updated')
   }
-  OnBeforeUpdate(){
+  onBeforeUpdate(){
     console.log('Component will be before updated')
   }
-  OnBeforeUnmount(){
+  onBeforeUnmount(){
     alert('Component will be before unmound')
   }
-  OnBeforeMount(){
+  onBeforeMount(){
     console.log('component wil be before mound')
   }
 
@@ -269,6 +269,9 @@ const PostList = ({ posts }) => {
 Use `<Component>` to create dynamic, polymorphic components and `<Slot>` to create flexible component layouts that can be filled by parent components.
 
 ```jsx
+import type { ReactNode } from 'react'
+import { Template, useSlots } from 'use-react-utilities'
+
 interface Product {
   id: number
   name: string
@@ -281,8 +284,26 @@ interface ProductCardProps {
   children: ReactNode
 }
 
-function ProductCard({ product, children }: ProductCardProps) {
+interface SlotProps {
+  product: Product;
+  AddToCart: () => void
+
+}
+function ProductCard({ product, children }: Readonly<ProductCardProps>) {
   const { slots, scopedSlots } = useSlots<Product>(children)
+
+  function AddToCart() {
+    alert('wewe')
+  }
+
+  const slotProps = {
+    AddToCart
+  } as SlotProps;
+
+  const combinedProps: Product & SlotProps = {
+    ...product,
+    ...slotProps,
+  };
 
   return (
     <div className="border rounded-lg shadow-md overflow-hidden bg-white">
@@ -291,7 +312,7 @@ function ProductCard({ product, children }: ProductCardProps) {
           {slots.header}
         </div>
       )}
-      
+
       <div className="p-4">
         {scopedSlots.body ? scopedSlots.body(product) : (
           <div>
@@ -300,10 +321,10 @@ function ProductCard({ product, children }: ProductCardProps) {
           </div>
         )}
       </div>
-      
+
       {slots.footer && (
         <div className="bg-gray-50 p-4 border-t">
-          {slots.footer}
+          {scopedSlots.footer ? scopedSlots.footer(combinedProps) : slots.footer}
         </div>
       )}
     </div>
@@ -325,7 +346,7 @@ export default function App() {
           <Template name="header">
             🔥 New Product
           </Template>
-          
+
           <Template name="body">
             {(prod: Product) => (
               <div className="space-y-3">
@@ -334,19 +355,18 @@ export default function App() {
                   <span className="text-3xl font-bold text-blue-600">
                     Rp {prod.price.toLocaleString('id-ID')}
                   </span>
-                  <span className={`px-3 py-1 rounded-full text-sm ${
-                    prod.stock > 0 ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                  }`}>
+                  <span className={`px-3 py-1 rounded-full text-sm ${prod.stock > 0 ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                    }`}>
                     {prod.stock > 0 ? `Stok: ${prod.stock}` : 'Habis'}
                   </span>
                 </div>
                 <p className="text-gray-600">
-                 Computer gaming
+                  Computer gaming
                 </p>
               </div>
             )}
           </Template>
-          
+
           {/* Static Slot - Tidak butuh akses data */}
           <Template name="footer">
             <button className="w-full bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 transition">

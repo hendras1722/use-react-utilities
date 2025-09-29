@@ -1,6 +1,6 @@
-export declare function OnMounted(callback: () => void): void;
-export declare function OnUnmounted(callback: () => void): void;
-export declare function OnUpdated(callback: () => void): void;
-export declare function OnBeforeUpdate(callback: () => void): void;
-export declare function OnBeforeUnmount(callback: () => void): void;
-export declare function OnBeforeMount(callback: () => void): void;
+export declare function onMounted(callback: () => void): void;
+export declare function onUnmounted(callback: () => void): void;
+export declare function onUpdated(callback: () => void): void;
+export declare function onBeforeUpdate(callback: () => void): void;
+export declare function onBeforeUnmount(callback: () => void): void;
+export declare function onBeforeMount(callback: () => void): void;
