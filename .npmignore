@@ -1,0 +1,6 @@
+src/
+packages/vite-project/
+tests/
+node_modules/
+vite.config.ts
+tsconfig.json

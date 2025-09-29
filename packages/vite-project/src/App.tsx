@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { Template, useSlots } from 'use-react-utilities'
+import { Template, useSlots, ref } from 'use-react-utilities'
 
 interface Product {
   id: number
@@ -59,6 +59,7 @@ function ProductCard({ product, children }: Readonly<ProductCardProps>) {
 }
 
 export default function App() {
+  const count = ref(0)
   const product: Product = {
     id: 1,
     name: "Laptop Gaming",
@@ -69,9 +70,7 @@ export default function App() {
   return (
     <div className="min-h-screen bg-gray-100 p-8">
       <div className="max-w-2xl mx-auto space-y-8">
-
-
-
+        <button onClick={() => count.value += 1}>Add Count</button>
         <ProductCard product={product}>
           <Template name="header">
             🔥 New Product

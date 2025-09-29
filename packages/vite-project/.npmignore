@@ -1,0 +1,6 @@
+src/
+public/
+tsconfig.json
+tsconfig.*.json
+vite.config.*
+*.log
