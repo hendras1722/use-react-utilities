@@ -1,14 +1,31 @@
 {
-  "name": "@msa_cli/react-composable",
-  "version": "2.0.4",
-  "description": "A set of reusable React composable utilities designed to simplify state management, logic abstraction, and enhance reactivity in modern React applications. Perfect for creating modular and maintainable codebases.",
+  "name": "use-react-utilities",
+  "version": "1.0.0",
+  "description": "A react utilities for need develop your project similar with vue 3",
   "main": "./lib/cjs/index.js",
   "module": "./lib/esm/index.js",
   "types": "./lib/esm/index.d.ts",
+   "exports": {
+    ".": {
+      "import": "./lib/esm/index.js",
+      "require": "./lib/cjs/index.cjs"
+    },
+    "./components/If": {
+      "import": "./lib/esm/components/If.js",
+      "require": "./lib/cjs/components/If.cjs"
+    },
+    "./components/Each": {
+      "import": "./lib/esm/components/Each.js",
+      "require": "./lib/cjs/components/Each.cjs"
+    },
+    "./components/Slot": {
+      "import": "./lib/esm/components/Slot.js",
+      "require": "./lib/cjs/components/Slot.cjs"
+    }
+  },
   "files": [
     "/lib"
   ],
-  "homepage": "https://react-composable.vercel.app/",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "npm run build:esm && npm run build:cjs",
@@ -20,7 +37,6 @@
   "dependencies": {
     "@types/react": "^19.0.7",
     "@types/react-dom": "^19.0.3",
-    "date-fns": "^4.1.0",
     "ofetch": "^1.4.1"
   },
   "devDependencies": {
@@ -30,6 +46,6 @@
     "react-dom": "workspace:*"
   },
   "workspaces": [
-    "packages/*"
+    "packages/vite-project/*"
   ]
 }
