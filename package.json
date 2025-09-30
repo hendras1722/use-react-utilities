@@ -1,6 +1,6 @@
 {
   "name": "use-react-utilities",
-  "version": "1.0.0",
+  "version": "1.0.2",
   "description": "A react utilities for need develop your project similar with vue 3",
   "main": "./lib/cjs/index.js",
   "module": "./lib/esm/index.js",
@@ -21,6 +21,14 @@
     "./components/Slot": {
       "import": "./lib/esm/components/Slot.js",
       "require": "./lib/cjs/components/Slot.cjs"
+    },
+    "./components/Component": {
+      "import": "./lib/esm/components/Component.js",
+      "require": "./lib/cjs/components/Component.cjs"
+    }, 
+    "./components/KeepAlive": {
+      "import": "./lib/esm/components/KeepAlive.js",
+      "require": "./lib/cjs/components/KeepAlive.cjs"
     }
   },
   "files": [

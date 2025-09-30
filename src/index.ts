@@ -13,3 +13,4 @@ export * from "./components/Each";
 export * from "./components/if";
 export * from "./components/Slot";
 export * from "./components";
+export * from './components/KeepAlive'
