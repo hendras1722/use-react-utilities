@@ -418,15 +418,15 @@ export default function Counter() {
     <IsComponent is={Counter} name="This Name Props Name" />
 
     <IsComponent is="a" href="https://google.com" target="_blank">
-       Buka Google
+       Open Google
     </IsComponent>
 
     <IsComponent is="h1" className="text-2xl font-bold">
-      Judul Halaman
+      Title
     </IsComponent>
 
     <IsComponent is="div" style={{ padding: '20px', background: '#f0f0f0' }}>
-      Konten dalam div
+      Content div
     </IsComponent>
   );
 }
@@ -437,7 +437,7 @@ export default function Counter() {
 
 ### `KeepAlive`
 
-Creates dynamic components 
+Creating active components and not removing values
 ```tsx
 import { useState, useEffect } from "react";
 import { KeepAlive, } from 'use-react-utilities'

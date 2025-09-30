@@ -1,5 +1,3 @@
-'use client';
-
 import { useState, useMemo } from 'react';
 
 export function ref<T>(initialValue: T): { value: T } {
