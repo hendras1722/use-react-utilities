@@ -192,7 +192,7 @@ function FocusInput() {
 
 ---
 
-### `useWatchEffect`
+### `useWatch`
 
 Runs an effect immediately and automatically re-runs it whenever any of its dependencies change. Unlike `useEffect`, you don't need to specify a dependency array.
 
@@ -439,24 +439,30 @@ export default function Counter() {
 
 Creating active components and not removing values
 ```tsx
-import { useState, useEffect } from "react";
-import { KeepAlive, } from 'use-react-utilities'
+import { KeepAlive, onMounted,onUnmounted, ref, onActivated } from 'use-react-utilities'
 
 // Demo Components
 const Counter: React.FC<{ name: string }> = ({ name }) => {
-  const [count, setCount] = useState<number>(0);
+  const count = ref(0)
 
-  useEffect(() => {
-    console.log(`${name} mounted`);
-    return () => console.log(`${name} unmounted`);
-  }, [name]);
+  onActivated(() => {
+    console.log('page actived' + name)
+  })
+
+  onMounted(() => {
+      console.log(`${name} mounted`);
+  })
+
+  onUnmounted(() => {
+    console.log(`${name} unmounted`);
+  })
 
   return (
     <div className="p-6 bg-blue-50 rounded-lg">
       <h2 className="text-xl font-bold mb-4">{name}</h2>
       <p className="text-3xl font-bold mb-4">{count}</p>
       <button
-        onClick={() => setCount(count + 1)}
+        onClick={() => count.value += 1}
         className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
       >
         Increment
@@ -466,24 +472,32 @@ const Counter: React.FC<{ name: string }> = ({ name }) => {
 };
 
 const InputField: React.FC<{ name: string }> = ({ name }) => {
-  const [text, setText] = useState<string>('');
+  const text = ref('')
 
-  useEffect(() => {
-    console.log(`${name} mounted`);
-    return () => console.log(`${name} unmounted`);
-  }, [name]);
+  onActivated(() => {
+    console.log('page actived' + name)
+  })
+
+  onMounted(() => {
+      console.log(`${name} mounted`);
+  })
+
+  onUnmounted(() => {
+    console.log(`${name} unmounted`);
+  })
+
 
   return (
     <div className="p-6 bg-green-50 rounded-lg">
       <h2 className="text-xl font-bold mb-4">{name}</h2>
       <input
         type="text"
-        value={text}
-        onChange={(e) => setText(e.target.value)}
+        value={text.value}
+        onChange={(e) => text.value = e.target.value}
         placeholder="Type something..."
         className="w-full px-4 py-2 border rounded"
       />
-      <p className="mt-2 text-gray-600">Value: {text}</p>
+      <p className="mt-2 text-gray-600">Value: {text.value}</p>
     </div>
   );
 };
@@ -494,18 +508,25 @@ interface Todo {
 }
 
 const Todo: React.FC<{ name: string }> = ({ name }) => {
-  const [todos, setTodos] = useState<Todo[]>([]);
-  const [input, setInput] = useState<string>('');
+  const todos = ref<Todo[]>([])
+  const input = ref<string>('')
 
-  useEffect(() => {
-    console.log(`${name} mounted`);
-    return () => console.log(`${name} unmounted`);
-  }, [name]);
+  onActivated(() => {
+    console.log('page actived' + name)
+  })
+
+  onMounted(() => {
+      console.log(`${name} mounted`);
+  })
+
+  onUnmounted(() => {
+    console.log(`${name} unmounted`);
+  })
 
   const addTodo = () => {
     if (input.trim()) {
-      setTodos([...todos, { id: Date.now(), text: input }]);
-      setInput('');
+      todos.value = [...todos.value, { id: Date.now(), text: input }]
+      input.value = ''
     }
   };
 
@@ -516,7 +537,7 @@ const Todo: React.FC<{ name: string }> = ({ name }) => {
         <input
           type="text"
           value={input}
-          onChange={(e) => setInput(e.target.value)}
+          onChange={(e) => input.value = e.target.value}
           onKeyPress={(e) => e.key === 'Enter' && addTodo()}
           placeholder="Add todo..."
           className="flex-1 px-4 py-2 border rounded"
@@ -529,7 +550,7 @@ const Todo: React.FC<{ name: string }> = ({ name }) => {
         </button>
       </div>
       <div className="space-y-2">
-        {todos.map((todo) => (
+        {todos.value.map((todo) => (
           <div key={todo.id} className="p-2 bg-white rounded">
             {todo.text}
           </div>
@@ -541,10 +562,10 @@ const Todo: React.FC<{ name: string }> = ({ name }) => {
 
 // Demo App
 export default function App() {
-  const [currentView, setCurrentView] = useState('counter');
+  const currentView = ref('counter')
 
   const getComponent = () => {
-    switch (currentView) {
+    switch (currentView.value) {
       case 'counter':
         return <Counter name="Counter Component" />;
       case 'input':
@@ -565,7 +586,7 @@ export default function App() {
 
         <div className="flex gap-4 mb-8 justify-center">
           <button
-            onClick={() => setCurrentView('counter')}
+            onClick={() => currentView.value = 'counter'}
             className={`px-6 py-3 rounded-lg font-semibold transition ${currentView === 'counter'
               ? 'bg-blue-500 text-white'
               : 'bg-white text-gray-700 hover:bg-gray-50'
@@ -574,7 +595,7 @@ export default function App() {
             Counter
           </button>
           <button
-            onClick={() => setCurrentView('input')}
+            onClick={() => currentView.value = 'input'}
             className={`px-6 py-3 rounded-lg font-semibold transition ${currentView === 'input'
               ? 'bg-green-500 text-white'
               : 'bg-white text-gray-700 hover:bg-gray-50'
@@ -583,7 +604,7 @@ export default function App() {
             Input
           </button>
           <button
-            onClick={() => setCurrentView('todo')}
+            onClick={() => currentView.value = 'todo'}
             className={`px-6 py-3 rounded-lg font-semibold transition ${currentView === 'todo'
               ? 'bg-purple-500 text-white'
               : 'bg-white text-gray-700 hover:bg-gray-50'
@@ -603,6 +624,394 @@ export default function App() {
   );
 }
 ```
+
+### Update Version 1.0.5 
+---
+
+### `Teleport`
+Creates Teleport component to target  
+```tsx
+import { Teleport, ref } from 'use-react-utilities';
+
+// Demo App
+export default function App() {
+  const showModal = ref(false);
+  const showNotification = ref(false);
+  const showInDiv = ref(false);
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-8">
+      <div className="max-w-4xl mx-auto">
+        <div className="bg-white rounded-lg shadow-lg p-8">
+          <h1 className="text-3xl font-bold text-gray-800 mb-2">
+            React Teleport Demo
+          </h1>
+
+          <div className="space-y-4">
+            <button
+              onClick={() => (showModal.value = true)}
+              className="px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition"
+            >
+              Open Modal (to body)
+            </button>
+
+            <button
+              onClick={() => (showNotification.value = true)}
+              className="ml-4 px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition"
+            >
+              Notification (to body)
+            </button>
+
+            <button
+              onClick={() => (showInDiv.value = true)}
+              className="ml-4 px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition"
+            >
+              Teleport to #target-div
+            </button>
+          </div>
+
+          {/* Target div untuk demo */}
+          <div className="mt-8 p-6 bg-yellow-50 border-2 border-yellow-300 rounded-lg min-h-32">
+            <h3 className="font-semibold text-yellow-800 mb-2">
+              Target Div (id="target-div")
+            </h3>
+            <p className="text-yellow-700 text-sm mb-2">
+              content show in this div
+            </p>
+            <div
+              id="target-div"
+              className="bg-white p-4 rounded border border-yellow-200 min-h-16"
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Modal teleport */}
+      {showModal.value && (
+        <Teleport to="body">
+          <div
+            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+            onClick={(e) => {
+              if (e.target === e.currentTarget) showModal.value = false;
+            }}
+          >
+            <div className="bg-white rounded-lg p-8 max-w-md w-full mx-4 shadow-2xl">
+              <h2 className="text-2xl font-bold text-gray-800 mb-4">
+                {showModal.value ? "true" : "false"} Modal via Teleport
+              </h2>
+              <p className="text-gray-600 mb-6">
+                the modal teleport{" "}
+                <code className="bg-gray-100 px-2 py-1 rounded">
+                  document.body
+                </code>{" "}
+                using Teleport!
+              </p>
+              <button
+                onClick={() => (showModal.value = false)}
+                className="px-6 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition"
+              >
+                Tutup
+              </button>
+            </div>
+          </div>
+        </Teleport>
+      )}
+
+      {/* Notification teleport */}
+      {showNotification.value && (
+        <Teleport to="body">
+          <div className="fixed top-4 right-4 z-50 animate-slide-in">
+            <div className="bg-green-600 text-white px-6 py-4 rounded-lg shadow-lg flex items-center gap-3">
+              <svg
+                className="w-6 h-6"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M5 13l4 4L19 7"
+                />
+              </svg>
+              <span className="font-medium">
+                Notification teleport to body!
+              </span>
+              <button
+                onClick={() => (showNotification.value = false)}
+                className="ml-4 hover:bg-green-700 rounded p-1 transition"
+              >
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+            </div>
+          </div>
+        </Teleport>
+      )}
+
+      {/* Teleport ke target div */}
+      {showInDiv.value && (
+        <Teleport to="#target-div">
+          <div className="bg-gradient-to-r from-purple-500 to-pink-500 text-white p-4 rounded-lg shadow-lg">
+            <div className="flex items-center justify-between">
+              <div>
+                <h4 className="font-bold mb-1">Success teleport!</h4>
+                <p className="text-sm">render to div with id "target-div"</p>
+              </div>
+              <button
+                onClick={() => (showInDiv.value = false)}
+                className="ml-4 hover:bg-white hover:bg-opacity-20 rounded p-2 transition"
+              >
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+            </div>
+          </div>
+        </Teleport>
+      )}
+    </div>
+  );
+}
+```
+
+### `useTemplateRef`
+```tsx
+import { useTemplateRef } from 'use-react-utilities'
+
+  const formRef = useTemplateRef()
+
+  <Form ref={formRef}
+   ...>
+
+
+   </Form>
+```
+
+### `Form Validation`
+Create Form Validation
+```tsx
+import { z } from 'zod';
+import * as yup from 'yup';
+import { ref, Form, FormField, useTemplateRef } from 'use-react-utilities'
+
+const yupSchema = yup.object({
+  email: yup
+    .string().email("Email tidak valid"),
+  password: yup.string().required("Password wajib diisi"),
+  name: yup
+    .string()
+    .trim()
+    .min(2, "Nama wajib diisi")
+    .required("Nama wajib diisi"),
+  file: yup
+    .mixed<File>()
+    .required("File wajib diisi")
+    .test("fileSize", "Ukuran file maksimal 2MB", (value) => {
+      return value instanceof File ? value.size <= 2 * 1024 * 1024 : false;
+    })
+    .test("fileType", "Hanya menerima file gambar (jpg/png)", (value) => {
+      return value instanceof File
+        ? ["image/jpeg", "image/png"].includes(value.type)
+        : false;
+    }),
+});
+
+// choose validation zod or yup
+const zodSchema = z.object({
+  email: z.string().email("Email tidak valid"),
+  password: z.string().min(8, "Password minimal 8 karakter"),
+  name: z.string().min(2, "Nama wajib diisi"),
+  file: z.any(),
+})
+
+
+type FormValues = yup.InferType<typeof yupSchema>;
+export default function MyForm() {
+
+  const formState = ref<FormValues>({
+    email: "",
+    password: "",
+    name: "",
+    file: undefined as unknown as File,
+  })
+
+  const handleSubmit = (e: { data: FormValues }) => {
+    console.log("Form submitted ✅:", e.data);
+  };
+  const handleError = (e: { errors: any[] }) => {
+    console.log("Validation errors ❌:", e.errors);
+  };
+
+  const formRef = useTemplateRef()
+
+  const validateClick = async () => {
+    formRef?.validate({ name: ['email'] })
+  };
+
+  return (
+    <>
+      <button onClick={validateClick}>validate path </button>
+      <Form
+        ref={formRef}
+        state={formState.value}
+        schema={zodSchema} // ✅ validasi pakai Zod
+        onSubmit={handleSubmit}
+        onError={handleError}
+      >
+        <FormField label="Email" name="email">
+          {({ onChange }) => (
+            <div>
+              <input
+                type="email"
+                value={formState.value.email}
+                onChange={(e) => {
+                  formState.value.email = e.target.value
+                  onChange()
+                }}
+                className="border p-2 rounded w-full"
+              />
+              {/* {error && <span className="text-red-500">{error}</span>} */}
+            </div>
+          )}
+        </FormField>
+
+        <FormField label="Password" name="password">
+          {({ onInput, error }) => (
+            <div>
+              <input
+                type="password"
+                value={formState.value.password}
+                onChange={(e) => {
+                  formState.value.password = e.target.value
+
+                }}
+                onInput={onInput}
+                className="border p-2 rounded w-full"
+              />
+              {/* {error && <span className="text-red-500">{error}</span>} */}
+            </div>
+          )}
+        </FormField>
+
+        <FormField label="Nama" name="name">
+          {({ onChange }) => (
+            <div>
+              <input
+                type="text"
+                value={formState.value.name}
+                onChange={(e) => {
+                  formState.value.name = e.target.value
+                  onChange()
+                }}
+                className="border p-2 rounded w-full"
+              />
+              {/* {error && <span className="text-red-500">{error}</span>} */}
+            </div>
+          )}
+        </FormField>
+
+        <FormField label="File Upload" name="file">
+          {({ onChange, error }) => (
+            <div>
+              <input
+                type="file"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) {
+                    formState.value.file = file;
+                  }
+                  onChange();
+                }}
+                className="border p-2 rounded w-full"
+              />
+              {error && <span className="text-red-500">{error}</span>}
+            </div>
+          )}
+        </FormField>
+
+        <button type="submit" className="mt-4 px-4 py-2 bg-blue-500 text-white rounded">
+          Submit
+        </button>
+      </Form>
+    </>
+  );
+}
+```
+
+
+### `useHead`
+
+```tsx
+useHead({
+    title: 'My Page',
+    titleTemplate: (title) => 'My Site | ' + title, // or (title) => `${title} - My Site`
+    base: { href: '/' },
+    meta: [
+      { name: 'description', content: 'Page description' },
+      { property: 'og:title', content: 'My Page' },
+      { charset: 'utf-8' }
+    ],
+    link: [
+      { rel: 'canonical', href: 'https://example.com' },
+      { rel: 'icon', href: '/favicon.ico', type: 'image/x-icon' }
+    ],
+    style: [
+      { innerHTML: 'body { margin: 0; }' }
+    ],
+    script: [
+      { src: 'https://example.com/script.js', async: true }
+    ],
+    noscript: [
+      { innerHTML: '<img src="https://example.com/pixel.gif" />' }
+    ],
+    htmlAttrs: {
+      lang: 'id',
+      dir: 'ltr'
+    },
+    bodyAttrs: {
+      class: 'dark-mode'
+    }
+  });
+```
+
+### `useSeoMeta`
+```tsx
+useSeoMeta({
+    title: 'Create Title',
+    description: 'Description page for SEO',
+    keywords: ['react', 'typescript', 'seo'],
+    ogTitle: 'title for Social Media',
+    ogImage: 'https://example.com/image.jpg',
+    twitterCard: 'summary_large_image',
+    author: 'John Doe'
+});
+```
+
+
+
 
 ## Contributing
 

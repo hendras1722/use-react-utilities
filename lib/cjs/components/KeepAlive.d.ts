@@ -1,4 +1,5 @@
-import React, { ReactNode } from 'react';
+import React, { type ReactNode } from "react";
+export declare const useActivated: (callback: () => void) => void;
 interface KeepAliveProps {
     children: ReactNode;
     name: string;

@@ -1,5 +1,6 @@
-import { useEffect, useLayoutEffect } from 'react';
+import { useEffect, useLayoutEffect, createContext, useContext } from 'react';
 import { ref } from './useRef';
+import { useWatch } from './useWatchEffect';
 
 export function onMounted(callback: () => void) {
   useEffect(() => {
@@ -54,3 +55,32 @@ export function onBeforeMount(callback: () => void) {
     hasRun.value = true
   }
 }
+
+// ===================================================================
+// CONTEXT
+// ===================================================================
+interface KeepAliveContextValue {
+  activeKey: string;
+}
+const KeepAliveContext = createContext<KeepAliveContextValue | null>(null);
+
+export const useActivated = (name: string, callback: () => void) => {
+  const ctx = useContext(KeepAliveContext);
+  const wasActive = ref<boolean>(false)
+
+  useWatch([ctx?.activeKey, name, callback], (newValue) => {
+    console.log(newValue)
+  })
+
+  useEffect(() => {
+    if (!ctx) return;
+
+    const isActive = ctx.activeKey === name;
+
+    if (isActive && !wasActive.value) {
+      callback();
+    }
+
+    wasActive.value = isActive;
+  }, );
+};
