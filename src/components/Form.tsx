@@ -231,7 +231,19 @@ function FormInner<T>(
       }
       return performValidation(opts?.name);
     },
-    handleSubmit
+    onSubmit: async () => {
+      try {
+        const { valid } = await performValidation();
+        if (valid) {
+          onSubmit?.({ data: state });
+        } else {
+          const currentErrors = await getErrors();
+          onError?.({ errors: currentErrors });
+        }
+      } catch (error) {
+        console.error("Unexpected error:", error);
+      }
+    },
   }));
 
 

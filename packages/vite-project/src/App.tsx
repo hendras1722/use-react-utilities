@@ -54,7 +54,7 @@ export default function MyForm() {
   const formRef = useTemplateRef()
 
   const validateClick = async () => {
-    formRef?.validate({ name: ['email'] })
+    formRef?.onSubmit()
   };
 
   return (
