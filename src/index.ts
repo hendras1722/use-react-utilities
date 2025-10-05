@@ -6,6 +6,7 @@ export * from "./useFormData";
 export * from "./useLifeCycle";
 export * from "./useRef";
 export * from "./useWatchEffect";
+export * from './useTemplateRef'
 
 // components
 export * from "./components/Component";

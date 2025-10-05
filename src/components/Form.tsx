@@ -8,6 +8,7 @@ import React, {
   forwardRef,
   useImperativeHandle,
 } from "react";
+import { useComputed } from "../useComputed";
 
 // ====================================================================
 // TYPES
@@ -43,7 +44,7 @@ export interface FormRef {
 
 
 export interface FormFieldProps {
-  label?: string;
+  label?: string | ((item: string) => React.ReactNode);
   name: string;
   children:
   | React.ReactNode
@@ -56,6 +57,7 @@ export interface FormFieldProps {
     }
   ) => React.ReactNode);
   isError?: boolean;
+  required?: boolean;
 }
 
 // ====================================================================
@@ -229,6 +231,7 @@ function FormInner<T>(
       }
       return performValidation(opts?.name);
     },
+    handleSubmit
   }));
 
 
@@ -258,6 +261,7 @@ export const FormField: React.FC<FormFieldProps> = ({
   name,
   children,
   isError,
+  required
 }) => {
   const context = useContext(FormContext);
   if (!context) throw new Error("FormField must be used within a Form");
@@ -284,13 +288,15 @@ export const FormField: React.FC<FormFieldProps> = ({
     void emitEvent({ type: "change", path: name });
   };
 
+  const labelWording = useComputed(() => typeof label === "string" ? label : name)
+
   return (
     <div className="my-1.5">
-      {label && (
-        <label htmlFor={name} className="block mb-1 font-medium text-gray-700">
-          {label}
-        </label>
-      )}
+      <label htmlFor={name} className="block mb-1 font-medium text-gray-700">
+        {typeof label === 'function' ? label(labelWording.value) : labelWording.value}
+        {required && <span className="text-red-500 ml-0.5">*</span>}
+      </label>
+
       {typeof children === "function"
         ? children({
           onBlur: handleBlur,

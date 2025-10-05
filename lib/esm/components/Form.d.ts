@@ -33,7 +33,7 @@ export interface FormRef {
     }>;
 }
 export interface FormFieldProps {
-    label?: string;
+    label?: string | ((item: string) => React.ReactNode);
     name: string;
     children: React.ReactNode | ((props: {
         onBlur: () => void;
@@ -42,6 +42,7 @@ export interface FormFieldProps {
         error: string;
     }) => React.ReactNode);
     isError?: boolean;
+    required?: boolean;
 }
 type FormComponent = <T = unknown>(props: FormProps<T> & {
     ref?: React.Ref<FormRef>;

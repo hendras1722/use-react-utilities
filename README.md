@@ -389,15 +389,18 @@ export default function App() {
 Creates dynamic components 
 ```tsx
 import { useState, useEffect } from "react"; 
-import { useComputed, ref } from 'use-react-utilities';
+import { useComputed, ref, onMounted, onUnmounted } from 'use-react-utilities';
 
 const Counter: React.FC<{ name: string }> = ({ name }) => {
   const [count, setCount] = useState<number>(0);
 
-  useEffect(() => {
+  onMounted(() => {
     console.log(`${name} mounted`);
-    return () => console.log(`${name} unmounted`);
-  }, [name]);
+  })
+
+  onUnmounted(() => {
+    console.log(`${name} unmounted`);
+  })
 
   return (
     <div className="p-6 bg-blue-50 rounded-lg">
@@ -1009,6 +1012,13 @@ useSeoMeta({
     author: 'John Doe'
 });
 ```
+
+
+### Update Version 1.0.5-x
+
+- Update form add custom label formfield
+- fixing import useTemplateRef 
+- add required formField
 
 
 

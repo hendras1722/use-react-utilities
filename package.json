@@ -1,6 +1,6 @@
 {
   "name": "use-react-utilities",
-  "version": "1.0.5",
+  "version": "1.0.5-2",
   "description": "A react utilities for need develop your project similar with vue 3",
   "main": "./lib/cjs/index.js",
   "module": "./lib/esm/index.js",
